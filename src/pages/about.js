@@ -1,9 +1,13 @@
 const AboutUs = () => {
     return(
-        <main >
-            <h2>About us page</h2>
-            <p>Content of the page</p>
-        </main>
+        <article>
+            <h1>About us</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum tincidunt purus vel blandit finibus. Praesent pulvinar urna vulputate mauris iaculis efficitur. Aliquam sit amet nibh vel nulla viverra ultrices eu eu odio. Integer est turpis, mollis id tortor lobortis, lacinia blandit nulla. Mauris non faucibus enim, sed gravida magna. Sed auctor dui metus, ac placerat arcu auctor vitae. Pellentesque vitae pharetra diam. Vivamus massa nunc, mattis ut egestas porttitor, venenatis id augue.</p>
+            <p>Sed ultricies, mauris vel tristique fermentum, eros dui sagittis leo, at dignissim augue ante a turpis. Integer semper mollis dolor id tincidunt. Integer tincidunt pharetra nulla. Sed porta venenatis vehicula. Nulla facilisi. Aenean iaculis at mauris at venenatis. Cras sed consequat neque. Proin nisl turpis, placerat et elit eu, pulvinar porta massa.</p>
+            <p>Integer at lectus ullamcorper, ultrices diam sit amet, vestibulum velit. Quisque aliquam sapien sapien, a imperdiet velit elementum vitae. Nam efficitur lectus ac molestie placerat. Morbi at imperdiet ipsum, quis egestas magna. Phasellus porta id risus a aliquet. Vestibulum diam ex, tempus vitae fermentum in, malesuada sed magna. Maecenas eu molestie orci. Curabitur non consectetur dolor. Nulla sit amet mauris porta, imperdiet enim et, tempus est. Curabitur ut nisi id mauris pharetra tempus vel at nibh. Aenean non ligula a arcu aliquam malesuada eget eu magna. Nulla in vulputate ante, nec scelerisque nunc. Curabitur non lectus imperdiet, ullamcorper dolor at, mollis massa. Mauris sit amet augue viverra justo blandit eleifend vel eu purus. Ut pellentesque urna nunc, fermentum ultrices orci pulvinar non.</p>
+            <p>Mauris interdum aliquam orci, ac fermentum metus laoreet sed. Donec luctus ex sit amet condimentum volutpat. Nam porta ligula a purus mattis placerat. Quisque molestie justo sapien, sed aliquet justo mollis ut. Cras pharetra ut metus nec molestie. Aenean lobortis turpis metus, at auctor arcu commodo ut. Pellentesque mauris arcu, vulputate id nisi id, facilisis pellentesque lorem.</p>
+            <p>In justo tortor, dictum nec fringilla vitae, porta id mi. Proin interdum finibus sodales. Mauris et tincidunt tortor. Vivamus nec lorem maximus, suscipit purus non, consectetur sapien. Nulla egestas leo orci, et aliquam eros consectetur at. Nulla facilisi. Etiam commodo euismod justo, nec posuere nulla convallis at. Morbi consequat porta magna, sit amet feugiat libero dignissim blandit. Curabitur sit amet ex eu felis tincidunt suscipit. Pellentesque maximus imperdiet ullamcorper. Phasellus sagittis scelerisque nunc.</p>     
+        </article>
     )   
 }
 export default AboutUs;

@@ -1,32 +1,5 @@
 .main{
   // min-height:1000vh;
-  .intro{
-    height:100vh;
-
-    font-size:3rem;
-    padding:1em;
-    margin:auto;
-    max-width:900px;
-    color:rgba(128, 128, 128, 0.156);
-    h1{
-      font-size:1em;
-      text-align:center;
-      //inset:0 0 0 0;
-      height:min-content;
-      width:max-content;
-      //background-image:linear-gradient(90deg, red, yellow, green);
-      background-size:contain;
-      background-repeat:no-repeat;
-      background-clip:text;
-    }
-    h2{
-      font-size:0.9em;
-    }
-    h3{
-      font-size:0.5em;
-    }
-
-  }
   nav{
     --padding: 10px;
     --border-color: teal;
