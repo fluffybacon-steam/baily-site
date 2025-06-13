@@ -28,7 +28,8 @@ const HeroText = ({ text }) => {
         opening_animation.then(() => {
                 leaving_animation.play();
             });
-        opening_animation.duration(3).play();   
+
+        opening_animation.duration(5).play();   
 
         // leaving_animation.duration(6).repeat(10).play();  
         
@@ -39,7 +40,7 @@ const HeroText = ({ text }) => {
     <>
         <div ref={titleWrapRef} className={'Hero'}>
             <h1 className="text">{textTop}</h1>
-            <Logo ref={svgRef} arrowcolor='#000' gradstart='#8f8888' gradstop='black' />
+            <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' />
         </div>
         <div ref={headlineRef} className="headline">
             Building 
@@ -247,10 +248,9 @@ const craftOpeningAnimation = (titleWrapRef,svgRef) =>{
 
   //  console.log('Line attributes:', { lineX, lineW, lineY, lineR });
   //  console.log('Origin:', `${svgOriginX} ${svgOriginY}`);
-
     opening_animation.addLabel('first')
         .to(gradient, {
-            rotate: 360,
+            rotate: 420,
             duration: 1.5,
             ease: "linear"
         }, 'first')
@@ -262,10 +262,12 @@ const craftOpeningAnimation = (titleWrapRef,svgRef) =>{
         }, 'first')
         .fromTo([line1,line2],
             {
-                clipPath: `xywh(calc(-100% - 0px) 0px 100% 100%)`
+                clipPath: `xywh(-${lineW  - 4.5}px 0px 100% 100%)`
+                // clipPath: `xywh(calc(100% - 4.5px)  0px 100% 100%)`,
             },
             {
-                clipPath: `xywh(calc(0% - 4.5px)  0px 100% 100%)`,
+                clipPath: `xywh(-4.5px 0px 100% 100%)`,
+                // clipPath: `xywh(calc(0% - 4.5px)  0px 100% 100%)`,
                 duration: 1.5,
                 ease: "linear"
             }, 'first'

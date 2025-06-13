@@ -1,4 +1,3 @@
-// File: components/Menu.js
 import Link from 'next/link'
 
 export default function Menu() {

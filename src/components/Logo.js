@@ -47,6 +47,22 @@ const Logo = React.forwardRef((props, ref) => {
 
           <rect
             style={{
+              // fill: arrow_color,
+              fill: 'blue',
+              fillOpacity: 1,
+              strokeWidth: 0.521,
+              strokeDasharray: "none",
+              paintOrder: "stroke fill markers",
+            }}
+            id="line2"
+            width="74.523979"
+            height="9"
+            x="14.1"
+            y="93"
+            ry="4.5"
+            />
+          <rect
+            style={{
               fill: arrow_color,
               fillOpacity: 1,
               strokeWidth: 0.521,
@@ -60,21 +76,6 @@ const Logo = React.forwardRef((props, ref) => {
             y="4.7993693"
             ry="4.5"
             transform="rotate(45)"
-            />
-          <rect
-            style={{
-              fill: arrow_color,
-              fillOpacity: 1,
-              strokeWidth: 0.521,
-              strokeDasharray: "none",
-              paintOrder: "stroke fill markers",
-            }}
-            id="line2"
-            width="74.523979"
-            height="9"
-            x="14.1"
-            y="93"
-            ry="4.5"
             />
           <circle
             style={{

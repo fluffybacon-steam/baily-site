@@ -1,12 +1,16 @@
-import Head from 'next/head'
-import Image from 'next/image'
 import { Red_Rose } from 'next/font/google'
 import styles from '@/styles/Home.module.scss'
-import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
-import {gsap} from 'gsap';
+import React, {useEffect, useRef } from 'react';
+
+// import Link from 'next/link';
+// import { useRouter } from 'next/router';
+import NavItem from '@/components/NavItem'
+
 import HeroText from '@/components/HeroText';
-import { useRouter } from 'next/router';
+
+import {gsap} from 'gsap';
+import { useGSAP } from '@gsap/react';
+
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,15 +22,27 @@ const rose = Red_Rose({
 
 export default function Home() {
   const navRef = useRef(null);
-//  console.log("Home render");
 
-  useEffect(()=>{
-  //  console.log('navRef.current.children',navRef.current?.children);
-    if(navRef.current && navRef.current.querySelectorAll('a').length === 4 && !navRef.current.classList.contains('initialized')){
-    //  console.log("trigger animate",navRef.current, !navRef.current.classList.contains('initialized'));
-      animateNav(navRef.current);
+  useGSAP(()=>{
+    console.log("useGSAP has ran!");
+    const nav = navRef.current;
+    console.log('nav',nav)
+    if(nav){
+      const navLinks = nav.querySelectorAll('a');
+      const tl = gsap.timeline({
+          scrollTrigger: {
+            markers:true,
+            trigger: nav,
+            pin: true, 
+            start: "top 25%", 
+            end: `+=500`, 
+            scrub: 1, 
+            // anticipatePin: 1
+          },
+      });
+      animateNav(tl, nav,navLinks);
     }
-  },[navRef])
+  },{ dependencies:[navRef] });
 
   return (
     <>
@@ -74,546 +90,347 @@ export default function Home() {
   )
 }
 
-const NavItem = (props) => {
-  const router = useRouter();
-
-  const linkRef = useRef(null);
-  const BoxTop = useRef(null);
-  const BoxRight = useRef(null);
-  const BoxBottom = useRef(null);
-  const BoxLeft = useRef(null);
-
-
-  const handleClick = (event, props) => {
-  //  console.log("handleClick",event,props);
-    event.preventDefault();
-    router.push(props.url);
-    // navItemToPageAnimation(props.number, props.url);
-  }
-
-  function navItemToPageAnimation(number, url){
-    [BoxTop.current, BoxRight.current, BoxLeft.current, BoxBottom.current].forEach((box) => {
-      if (box) {
-        box.style.opacity = '0'; // Set final opacity
-      }
-    });
-
-    // Set border widths
-    if (linkRef.current) {
-
-
-      const icon = linkRef.current.querySelector('.icon-wrapper');
-      const main = document.querySelector('main');
-      const masthead = document.querySelector('#masthead');
-
-      const iconRect = icon.getBoundingClientRect();
-      const mainRect = main.getBoundingClientRect();
-      const mastRect = masthead.getBoundingClientRect();
-
-      const cloneIcon = icon.cloneNode(true);
-
-      console.log('iconRect',iconRect);
-
-      const magicNum = 0;
-
-      gsap.set(cloneIcon,
-        {
-          position: 'fixed',
-          top  : `${iconRect.top - magicNum}px`,
-          left : `${iconRect.left}px`,
-          height: `${iconRect.height}px`,
-          // opacity: 0
-        }
-      )
-      gsap.set(cloneIcon.querySelector('svg'),
-        {
-          height:  `100%`,
-          width: 'auto',
-        }
-      )
-
-      document.querySelector('#__next').appendChild(cloneIcon);
-
-
-      const to_page_tl = gsap.timeline({ 
-        paused: true,
-        onComplete: (e) => {
-          console.log('onComplete',e, router, url);
-          router.push(url, undefined, { shallow: true });
-        }
-      });
-      
-      to_page_tl.to(document.querySelector('main'),{
-        opacity: 0,
-        duration: 0.5
-      }, 'fade')
-
-
-      to_page_tl.to(cloneIcon,{
-        opacity: 1,
-        marginTop: '1rem',
-        height: '100px',
-        left: `${mainRect.left}px`,
-        top: `${mastRect.height}px`,
-        duration:2,
-        ease: 'power1.inOut'
-      }, 'move')
-
-      to_page_tl.to(cloneIcon,{
-        rotation: -15,
-        duration: 1.5,
-        ease: 'expo.inOut'
-      }, 'move-=0.5')
-
-      .to(cloneIcon, {
-        rotation:  2,
-        duration:   1,
-        ease:      'none'
-      }, 'move+=1')
-
-      .to(cloneIcon, {
-        rotation:  0,
-        duration:   0.5,
-        ease:      'none'
-      },);
-
-      router.push(url);
-
-      // to_page_tl.duration(2).play();
-
-    }
-    
-  }
-
-//  console.log(props);
-
-  return (
-    <>
-      <Link 
-        ref={linkRef}
-        href={props.url} 
-        data-num={props.number} 
-        style={{gridArea:props.grid_area}}
-        // onClick={(e) => handleClick(e,props)}
-      >
-        <h2>
-          {props.title}
-        </h2>
-        <div className='icon-wrapper'>{props.icon}</div>
-        <p>{props.excerpt}</p>
-      </Link>
-      <div ref={BoxTop} data-num={props.number} className={`${props.styles["shadowBox"]} ${props.styles["shadowBox-top"]}`} style={{ gridArea: props.grid_area }}></div>
-      <div ref={BoxRight} data-num={props.number} className={`${props.styles["shadowBox"]} ${props.styles["shadowBox-right"]}`} style={{ gridArea: props.grid_area }}></div>
-      <div ref={BoxBottom} data-num={props.number} className={`${props.styles["shadowBox"]} ${props.styles["shadowBox-bottom"]}`} style={{ gridArea: props.grid_area }}></div>
-      <div ref={BoxLeft} data-num={props.number} className={`${props.styles["shadowBox"]} ${props.styles["shadowBox-left"]}`} style={{ gridArea: props.grid_area }}></div>
-    </>
-  )
-}
-
-const animateNav = (nav) =>{
-  nav.classList.add("initialized");
-
-  let tl = gsap.timeline({
-    paused:true,
-    scrollTrigger: {
-      markers:true,
-      trigger: nav,
-      pin: true, 
-      start: "top 25%", 
-      end: `+=500`, 
-      scrub: 1, 
-      // anticipatePin: 1
-    },
-  });
+const animateNav = (tl, nav, navLinks) =>{
+  console.log('animateNav ran', nav);
 
   const borderGirth = getPropertyValue(nav, '--padding');
   const gridGap = getPropertyValue(nav, '--gap');
 
-  const Boxes1 = nav.querySelectorAll('div[data-num="1"]');
-  const Boxes2 = nav.querySelectorAll('div[data-num="2"]');
-  const Boxes3 = nav.querySelectorAll('div[data-num="3"]');
-  const Boxes4 = nav.querySelectorAll('div[data-num="4"]');
-  ///Top
-  if(!Boxes1[0].classList.contains('animated')){
-    Boxes1[0].classList.add('animated');
-    Boxes1[0].style.placeSelf = 'start end';
-    tl.add(gsap.fromTo(Boxes1[0], 
-      { 
-        width:`0%`,
-        //translate:`-${box_offset.left}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`, 
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'top',
-    );
-  }
-  if(!Boxes2[0].classList.contains('animated')){
-    Boxes2[0].classList.add('animated');
-    Boxes2[0].style.placeSelf = 'start start';
-    tl.add(gsap.fromTo(Boxes2[0], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'top'
-    );
-  }
-  //Top Sides
-  if(!Boxes1[3].classList.contains('animated')){
-    Boxes1[3].classList.add('animated');
-    Boxes1[3].style.placeSelf = 'start start';
-    tl.add(gsap.fromTo(Boxes1[3], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'top-side'
-    );
-  }
-  if(!Boxes2[1].classList.contains('animated')){
-    Boxes2[1].classList.add('animated');
-    Boxes2[1].style.placeSelf = 'start end';
-    tl.add(gsap.fromTo(Boxes2[1], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'top-side'
-    );
-  }
-  //Bottom-side
-  if(!Boxes3[3].classList.contains('animated')){
-    Boxes3[3].classList.add('animated');
-    Boxes3[3].style.placeSelf = 'start start';
-    tl.add(gsap.fromTo(Boxes3[3], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'bottom-side'
-    );
-  }
-  if(!Boxes4[1].classList.contains('animated')){
-    Boxes4[1].classList.add('animated');
-    Boxes4[1].style.placeSelf = 'start end';
-    tl.add(gsap.fromTo(Boxes4[1], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'bottom-side'
-    );
-  }
-  //Bottom
-  if(!Boxes3[2].classList.contains('animated')){
-    Boxes3[2].classList.add('animated');
-    Boxes3[2].style.placeSelf = 'end start';
-    tl.add(gsap.fromTo(Boxes3[2], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'bottom'
-    );
-  }
-  if(!Boxes4[2].classList.contains('animated')){
-    Boxes4[2].classList.add('animated');
-    Boxes4[2].style.placeSelf = 'end end';
-    tl.add(gsap.fromTo(Boxes4[2], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'bottom'
-    );
-  }
-  //inner
-  if(!Boxes1[1].classList.contains('animated')){
-    Boxes1[1].classList.add('animated');
-    Boxes1[1].style.width = borderGirth/2;
-    Boxes1[1].style.placeSelf = 'start end';    tl.add(gsap.fromTo(Boxes1[1], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes1[1], 
-      { 
-        width: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes1[2].classList.contains('animated')){
-    Boxes1[2].classList.add('animated');
-    Boxes1[2].style.placeSelf = 'end start';
-    Boxes1[2].style.height =  borderGirth/2;
-    tl.add(gsap.fromTo(Boxes1[2], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes1[2], 
-      { 
-        height: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes2[3].classList.contains('animated')){
-    Boxes2[3].classList.add('animated');
-    Boxes2[3].style.placeSelf = 'start start';
-    Boxes2[3].style.width = borderGirth/2;
-    tl.add(gsap.fromTo(Boxes2[3], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes2[3], 
-      { 
-        width: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes2[2].classList.contains('animated')){
-    Boxes2[2].classList.add('animated');
-    Boxes2[2].style.placeSelf = 'end end';
-    Boxes2[2].style.height =  borderGirth/2;
-    tl.add(gsap.fromTo(Boxes2[2], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes2[2], 
-      { 
-        height: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes3[0].classList.contains('animated')){
-    Boxes3[0].classList.add('animated');
-    Boxes3[0].style.placeSelf = 'start start';
-    Boxes3[0].style.height =  borderGirth/2;
-    tl.add(gsap.fromTo(Boxes3[0], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes3[0], 
-      { 
-        height: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes3[1].classList.contains('animated')){
-    Boxes3[1].classList.add('animated');
-    Boxes3[1].style.placeSelf = 'end end';
-    Boxes3[1].style.width = borderGirth/2;
-    tl.add(gsap.fromTo(Boxes3[1], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes3[1], 
-      { 
-        width: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes4[0].classList.contains('animated')){
-    Boxes4[0].classList.add('animated');
-    Boxes4[0].style.placeSelf = 'start end';
-    Boxes4[0].style.height =  borderGirth/2;
-    tl.add(gsap.fromTo(Boxes4[0], 
-      { 
-        width:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes4[0], 
-      { 
-        height: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  }
-  if(!Boxes4[3].classList.contains('animated')){
-    Boxes4[3].classList.add('animated');
-    Boxes4[3].style.placeSelf = 'end start';
-    Boxes4[3].style.width = borderGirth/2;
-    tl.add(gsap.fromTo(Boxes4[3], 
-      { 
-        height:`0%`,
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        height: `100%`,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'inner'
-    );
-    tl.add(gsap.fromTo(Boxes4[3], 
-      { 
-        width: borderGirth/2
-        //translate:`${0}px -${box_offset.top}px`,
-      },
-      { 
-        width: borderGirth,
-        //translate:`0px 0px`,
-        ease:'none',
-      }
-    ), 'gap'
-    );
-  //  console.log(gridGap);
-    tl.add(gsap.to('.animated-nav', {gap: gridGap}),'gap');
-    tl.add(gsap.to('.animated-nav a', {opacity: 1}),'gap');
-    // tl.add(gsap.to('.animated-nav a', { '--gap': 0 }),'gap');
-    // tl.add(gsap.to('.animated-nav a', { height:'calc(100% + var(--gap))', width:'calc(100% + var(--gap))', ease:'steps(1)'}),'gap');
-    // tl.add(gsap.to('.animated-nav a', { opacity: 1, ease:'linear'}));
+  console.log('gridGap', gridGap);
+  console.log('borderGirth', borderGirth);
+
+  //for readability
+  if(true){
+    const Boxes1 = nav.querySelectorAll('div[data-num="1"]');
+    const Boxes2 = nav.querySelectorAll('div[data-num="2"]');
+    const Boxes3 = nav.querySelectorAll('div[data-num="3"]');
+    const Boxes4 = nav.querySelectorAll('div[data-num="4"]');
+    console.log('Boxes1',Boxes1);
+    ///Top
+    if(!Boxes1[0].classList.contains('animated')){
+      Boxes1[0].style.placeSelf = 'start end';
+      tl.add(gsap.fromTo(Boxes1[0], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`, 
+          ease:'none',
+        }
+      ), 'top',
+      );
+    }
+    if(!Boxes2[0].classList.contains('animated')){
+      Boxes2[0].style.placeSelf = 'start start';
+      tl.add(gsap.fromTo(Boxes2[0], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'top'
+      );
+    }
+    //Top Sides
+    if(!Boxes1[3].classList.contains('animated')){
+      Boxes1[3].style.placeSelf = 'start start';
+      tl.add(gsap.fromTo(Boxes1[3], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'top-side'
+      );
+    }
+    if(!Boxes2[1].classList.contains('animated')){
+      Boxes2[1].style.placeSelf = 'start end';
+      tl.add(gsap.fromTo(Boxes2[1], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'top-side'
+      );
+    }
+    //Bottom-side
+    if(!Boxes3[3].classList.contains('animated')){
+      Boxes3[3].style.placeSelf = 'start start';
+      tl.add(gsap.fromTo(Boxes3[3], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'bottom-side'
+      );
+    }
+    if(!Boxes4[1].classList.contains('animated')){
+      Boxes4[1].style.placeSelf = 'start end';
+      tl.add(gsap.fromTo(Boxes4[1], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'bottom-side'
+      );
+    }
+    //Bottom
+    if(!Boxes3[2].classList.contains('animated')){
+      Boxes3[2].style.placeSelf = 'end start';
+      tl.add(gsap.fromTo(Boxes3[2], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'bottom'
+      );
+    }
+    if(!Boxes4[2].classList.contains('animated')){
+      Boxes4[2].style.placeSelf = 'end end';
+      tl.add(gsap.fromTo(Boxes4[2], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'bottom'
+      );
+    }
+    //inner
+    if(!Boxes1[1].classList.contains('animated')){
+      Boxes1[1].style.width = borderGirth/2;
+      Boxes1[1].style.placeSelf = 'start end';    
+      tl.add(gsap.fromTo(Boxes1[1], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes1[1], 
+        { 
+          width: borderGirth/2
+        },
+        { 
+          width: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes1[2].classList.contains('animated')){
+      Boxes1[2].style.placeSelf = 'end start';
+      Boxes1[2].style.height =  borderGirth/2;
+      tl.add(gsap.fromTo(Boxes1[2], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes1[2], 
+        { 
+          height: borderGirth/2
+        },
+        { 
+          height: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes2[3].classList.contains('animated')){
+      Boxes2[3].style.placeSelf = 'start start';
+      Boxes2[3].style.width = borderGirth/2;
+      tl.add(gsap.fromTo(Boxes2[3], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes2[3], 
+        { 
+          width: borderGirth/2
+        },
+        { 
+          width: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes2[2].classList.contains('animated')){
+      Boxes2[2].style.placeSelf = 'end end';
+      Boxes2[2].style.height =  borderGirth/2;
+      tl.add(gsap.fromTo(Boxes2[2], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes2[2], 
+        { 
+          height: borderGirth/2
+        },
+        { 
+          height: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes3[0].classList.contains('animated')){
+      Boxes3[0].style.placeSelf = 'start start';
+      Boxes3[0].style.height =  borderGirth/2;
+      tl.add(gsap.fromTo(Boxes3[0], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes3[0], 
+        { 
+          height: borderGirth/2
+        },
+        { 
+          height: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes3[1].classList.contains('animated')){
+      Boxes3[1].style.placeSelf = 'end end';
+      Boxes3[1].style.width = borderGirth/2;
+      tl.add(gsap.fromTo(Boxes3[1], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes3[1], 
+        { 
+          width: borderGirth/2
+        },
+        { 
+          width: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes4[0].classList.contains('animated')){
+      Boxes4[0].style.placeSelf = 'start end';
+      Boxes4[0].style.height =  borderGirth/2;
+      tl.add(gsap.fromTo(Boxes4[0], 
+        { 
+          width:`0%`,
+        },
+        { 
+          width: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes4[0], 
+        { 
+          height: borderGirth/2
+        },
+        { 
+          height: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
+    if(!Boxes4[3].classList.contains('animated')){
+      Boxes4[3].style.placeSelf = 'end start';
+      Boxes4[3].style.width = borderGirth/2;
+      tl.add(gsap.fromTo(Boxes4[3], 
+        { 
+          height:`0%`,
+        },
+        { 
+          height: `100%`,
+          ease:'none',
+        }
+      ), 'inner'
+      );
+      tl.add(gsap.fromTo(Boxes4[3], 
+        { 
+          width: borderGirth/2
+        },
+        { 
+          width: borderGirth,
+          ease:'none',
+        }
+      ), 'gap'
+      );
+    }
   }
 
+  tl.add(
+    gsap.to(nav, {gap: gridGap}),
+    'gap'
+  );
+  tl.add(
+    gsap.to(navLinks, {opacity: 1, pointerEvents: 'auto'}),
+    'gap'
+  );
+
+  tl.to({},{
+    duration:5
+  });
+
   //Gap
-  if(tl.labels == {}){
-    tl.destroy();
-  } else {
-    tl.to({}, { duration: 2});
-  }
+  // if(tl.labels == {}){
+  //   tl.destroy();
+  // } else {
+  //   tl.to({}, { duration: 2});
+  // }
 
   return tl;
 }
-
 
 function getPropertyValue(element, property_name) {
   const styles = getComputedStyle(element);
