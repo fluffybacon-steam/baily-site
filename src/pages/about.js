@@ -28,16 +28,73 @@ const AboutUs = () => {
 
     return(
         <article ref={articleRef} className="loading">
-            {/* <div ref={iconRef} id='article_icon'>
-                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M480-120 200-272v-240L40-600l440-240 440 240v320h-80v-276l-80 44v240L480-120Zm0-332 274-148-274-148-274 148 274 148Zm0 241 200-108v-151L480-360 280-470v151l200 108Zm0-241Zm0 90Zm0 0Z"/></svg>
-            </div> */}
-            <h1>About us</h1>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum tincidunt purus vel blandit finibus. Praesent pulvinar urna vulputate mauris iaculis efficitur. Aliquam sit amet nibh vel nulla viverra ultrices eu eu odio. Integer est turpis, mollis id tortor lobortis, lacinia blandit nulla. Mauris non faucibus enim, sed gravida magna. Sed auctor dui metus, ac placerat arcu auctor vitae. Pellentesque vitae pharetra diam. Vivamus massa nunc, mattis ut egestas porttitor, venenatis id augue.</p>
-            <p>Sed ultricies, mauris vel tristique fermentum, eros dui sagittis leo, at dignissim augue ante a turpis. Integer semper mollis dolor id tincidunt. Integer tincidunt pharetra nulla. Sed porta venenatis vehicula. Nulla facilisi. Aenean iaculis at mauris at venenatis. Cras sed consequat neque. Proin nisl turpis, placerat et elit eu, pulvinar porta massa.</p>
-            <p>Integer at lectus ullamcorper, ultrices diam sit amet, vestibulum velit. Quisque aliquam sapien sapien, a imperdiet velit elementum vitae. Nam efficitur lectus ac molestie placerat. Morbi at imperdiet ipsum, quis egestas magna. Phasellus porta id risus a aliquet. Vestibulum diam ex, tempus vitae fermentum in, malesuada sed magna. Maecenas eu molestie orci. Curabitur non consectetur dolor. Nulla sit amet mauris porta, imperdiet enim et, tempus est. Curabitur ut nisi id mauris pharetra tempus vel at nibh. Aenean non ligula a arcu aliquam malesuada eget eu magna. Nulla in vulputate ante, nec scelerisque nunc. Curabitur non lectus imperdiet, ullamcorper dolor at, mollis massa. Mauris sit amet augue viverra justo blandit eleifend vel eu purus. Ut pellentesque urna nunc, fermentum ultrices orci pulvinar non.</p>
-            <p>Mauris interdum aliquam orci, ac fermentum metus laoreet sed. Donec luctus ex sit amet condimentum volutpat. Nam porta ligula a purus mattis placerat. Quisque molestie justo sapien, sed aliquet justo mollis ut. Cras pharetra ut metus nec molestie. Aenean lobortis turpis metus, at auctor arcu commodo ut. Pellentesque mauris arcu, vulputate id nisi id, facilisis pellentesque lorem.</p>
-            <p>In justo tortor, dictum nec fringilla vitae, porta id mi. Proin interdum finibus sodales. Mauris et tincidunt tortor. Vivamus nec lorem maximus, suscipit purus non, consectetur sapien. Nulla egestas leo orci, et aliquam eros consectetur at. Nulla facilisi. Etiam commodo euismod justo, nec posuere nulla convallis at. Morbi consequat porta magna, sit amet feugiat libero dignissim blandit. Curabitur sit amet ex eu felis tincidunt suscipit. Pellentesque maximus imperdiet ullamcorper. Phasellus sagittis scelerisque nunc.</p>     
-            <Link href='/'>Test</Link>
+            <h1>About Us</h1>
+            <hr />
+            <figure class='right'>
+                <img width="800" height="946" alt='picture of the founder and his dog' src='https://pub-260e094998904f71aded9ac9db8b350c.r2.dev/president%26co.webp' />
+                <figcaption>President of Hohman Digital, Baily Hohman, sitting with his co-president, Buzz Boy</figcaption>
+            </figure>
+            <div class='content-block'>
+                <h2>Who We Are</h2>
+                <p>
+                    Hi! I'm <strong>Baily</strong>, founder and president of <strong>Hohman Digital LLC</strong>. 
+                    My job is bring my clients' brands & ideas to the digital world.
+                    Whether its launching a new business or reinventing an existing one, 
+                    we make sure its not only seen... Its remembered.
+                </p>
+                <p>
+                    We specialize in:
+                </p>
+                <ul class='custom-icons'>
+                    <li class='web'>Frontend & Backend Website Development</li>
+                    <li class='data'>Data-driven <abbr title='Pay-Per-Click'>PPC</abbr> campaigns and <abbr title="Search Engine Optimization">SEO </abbr> strategies</li>
+                    <li class='ai'>Emerging <abbr title='Generative Engine Optimization'>GEO</abbr> techniques</li>
+                    <li class='app'>Android & iOS Applications</li>
+                </ul>
+                <p>
+                    We're also growing our software development capabilities and are currently training our own AI model.
+                    For the larger projects that come my way, I leverage my collaborative network of freelancers to deliver at scale.
+                </p>
+            </div>
+            <div class='content-block'>
+                <h2>Meet the Founder</h2>
+                <h3>The Curious Coder</h3>
+                <p>
+                    I first began writing code around the age of 11. 
+                    This first consisted of simple Batch scripts, motivated by a desire to understand computers at their core. 
+                    Naturally, the scope of these home projects grew and a skill developed.
+                    By the time I graduated Highschool, I was developing full Windows applications in C# and designing basic websites in HTML & CSS.
+                    My parents assumed I would pursue Comp Sci in College, but my growing curiosity for anatomy took me in a different direction.
+                </p>
+                <h3>The Scientist Years</h3>
+                <p>
+                    I earned my Bachelors of Science in Biotechnology at Penn State University, with minors in Chemistry and Microbiology.
+                    Even while diving into life sciences, I stayed close to my roots in code.
+                </p>
+                <p>
+                    During undergraduate, I assisted the university's Department of Anthropology with 
+                    <a href='https://academic.oup.com/gbe/article/9/7/1978/4037174' rel='nofollow'> bioinformatic research.</a> After college, I joined <strong>Eurofins Lancaster Labs</strong> as a Microbiologist. Trading my keyboard for a lab coat, at least temporarily.
+                </p>
+                <h3>The Turning Point</h3>
+                <p>
+                    While at Eurofins, I built a custom scheduling application in Visual Basic to replace the outdated, error-prone paper system.
+                    My team was grateful and I was proud of my work.
+                    However, in doing so I came to realization that I enjoyed the coding far more than anything I was doing in the lab.</p>
+                <p>
+                    So I made the leap. I quit my job and set out to reinvent myself as a Web Developer.
+                </p>
+                <h3>Agency Roots to Entrepreneurial Growth</h3>
+                <p>
+                    I found my next chapter at <a href='https://donovanadv.com/'>Donovan Advertising,</a> 
+                    where I honed my skills in web development and design under the mentorship of seasoned creatives. 
+                    I also learned about the essentials of branding, digital strategy, and marketing psychology. 
+                    It was an incredible training ground and I got to work with some amazing brands & people. 
+                </p>
+                <p>
+                    But eventually, I knew it was time to build something of my own. 
+                    So in 2025, I left Donovan and launched Hohman Digital LLC, a digital services company. 
+                </p>
+            </div>
         </article>
     )   
 }

@@ -469,7 +469,9 @@ export default function Showcase() {
                 top: scrollTo,
                 behavior: 'smooth',
             });
-            monitorSwiper.slideTo(index);
+            setTimeout(() => {
+                monitorSwiper.slideTo(index);
+            }, 250);
         }
     }
 

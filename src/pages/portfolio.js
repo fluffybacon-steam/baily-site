@@ -26,8 +26,8 @@ const Portfolio = () => {
 
     return(
         <article ref={articleRef}  className="loading">
-            <h1>Portfolio page</h1>
-            <p>Blah blah blah</p>
+            <h1>Portfolio</h1>
+            <hr />
             <Showcase />
         </article>
     )   
