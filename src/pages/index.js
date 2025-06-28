@@ -31,7 +31,7 @@ export default function Home() {
       const navLinks = nav.querySelectorAll('a');
       const tl = gsap.timeline({
           scrollTrigger: {
-            markers:true,
+            // markers:true,
             trigger: nav,
             pin: true, 
             start: "top 25%", 

@@ -104,3 +104,16 @@ export function hideTooltip() {
 
   tooltip.style.display = "";
 }
+
+export function getHeightOfChildren(element, depth = 1) {
+    if (!element || depth < 1) return 0;
+    let totalHeight = 0;
+    for (const child of element.children) {
+        if (depth > 1) {
+            totalHeight += getHeightOfChildren(child, depth - 1);
+        } else {
+            totalHeight += child.offsetHeight;
+        }
+    }
+    return totalHeight;
+}

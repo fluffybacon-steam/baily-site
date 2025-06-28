@@ -689,6 +689,45 @@ article{
   }
 }
 
+//ServiceList
+@mixin nth-children($count, $height) {
+  @for $i from 2 through $count {
+    &:nth-child(#{$i}) {
+      top: calc(($i - 1) * $height);
+    }
+  }
+}
+.service-list{
+  --bg: white;
+  --titleHeight: 4.5rem;
+  $count : 7;
+  // background:var(--bg);
+  max-width:900px;
+  margin:2rem auto;
+  position: relative;
+  // height: calc(($count) * var(--titleHeight));
+  .service{
+    position: sticky;
+    min-height:var(--titleHeight);
+    background:var(--bg);
+    border:1px solid grey;
+    padding:0.5rem;
+    h2{
+      margin:0 0 0.5rem 0;
+      font-size:3rem;
+    }
+
+    &:nth-child(1){
+      top: 0px;
+      h2{
+        margin-top:0px;
+      }
+    }
+    @include nth-children($count, var(--titleHeight));
+  }
+}
+
+
 #tooltip {
   position: absolute;
   display: none;

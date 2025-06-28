@@ -95,7 +95,7 @@ const SocialCircle = ({socials}) =>{
                    start: "center bottom",
                    end: "bottom bottom",
                    scrub: 2,
-                   markers:true,
+                //    markers:true,
                 //    toggleActions: 'play none none none',
                },
            })
