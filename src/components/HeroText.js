@@ -29,7 +29,7 @@ const HeroText = ({ text }) => {
                 leaving_animation.play();
             });
 
-        opening_animation.duration(5).play();   
+        opening_animation.duration(0).play();   
 
         // leaving_animation.duration(6).repeat(10).play();  
         
@@ -39,7 +39,7 @@ const HeroText = ({ text }) => {
   return (
     <>
         <div ref={titleWrapRef} className={'Hero'}>
-            <h1 className="text">{textTop}</h1>
+            {/* <h1 className="text">{textTop}</h1> */}
             <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' />
         </div>
         <div ref={headlineRef} className="headline">
@@ -227,168 +227,8 @@ const craftOpeningAnimation = (titleWrapRef,svgRef) =>{
         paused:true,
     });
 
-    const title = titleWrapRef.current.querySelector('h1');
-    const group = svgRef.current.querySelector('#arrow');
-    const circle = svgRef.current.querySelector('#circle1');
-    const gradient = svgRef.current.querySelector('#radialGradient2');
-    const line1 = svgRef.current.querySelector('#line1');
-    const line2 = svgRef.current.querySelector('#line2');
-
-    if (!circle || !gradient || !line2) {
-        console.warn('Missing SVG elements!');
-        return;
-    }
-
-    const lineX = parseFloat(line2.getAttribute('x'));
-    const lineW = parseFloat(line2.getAttribute('width'));
-    const lineY = parseFloat(line2.getAttribute('y'));
-    const lineR = parseFloat(line2.getAttribute('ry'));
-    const svgOriginX = lineX + lineW - lineR;
-    const svgOriginY = lineY + lineR;
-
-  //  console.log('Line attributes:', { lineX, lineW, lineY, lineR });
-  //  console.log('Origin:', `${svgOriginX} ${svgOriginY}`);
-    opening_animation.addLabel('first')
-        .to(gradient, {
-            rotate: 420,
-            duration: 1.5,
-            ease: "linear"
-        }, 'first')
-        .to(circle, {
-            x: 46.2916,
-            y: 46.3916,
-            duration: 1.5,
-            ease: "linear"
-        }, 'first')
-        .fromTo([line1,line2],
-            {
-                clipPath: `xywh(-${lineW  - 4.5}px 0px 100% 100%)`
-                // clipPath: `xywh(calc(100% - 4.5px)  0px 100% 100%)`,
-            },
-            {
-                clipPath: `xywh(-4.5px 0px 100% 100%)`,
-                // clipPath: `xywh(calc(0% - 4.5px)  0px 100% 100%)`,
-                duration: 1.5,
-                ease: "linear"
-            }, 'first'
-        )
-        .fromTo(line2, 
-            {
-                opacity:0
-            }, {
-                opacity:1,
-                ease: "linear",
-                duration:0.01
-            }, '>'
-        )
-        .fromTo(line2, {
-            rotate: 45,
-            scaleX: 0.8,
-            svgOrigin: `${svgOriginX}px ${svgOriginY}px`
-        }, {
-            rotate: -45,
-            scaleX: 1,
-            duration: 0.75,
-            delay:0.1,
-            ease: "bounce.out"
-        }, '>');
-    
-    // const svgWidth = svgRef.current.getBoundingClientRect().width;
-    // const titleWidth = title.offsetWidth;
-    // console.log('svgf offset',-1 * (titleWidth/2) + svgWidth);
-
-    // const flipOffset = -1 * (titleWidth/2);
-    opening_animation.addLabel('flip')
-        .to(svgRef.current,
-            {
-                left: `0%`,
-                height: '100%',
-                scaleX: 0.1,
-                // x:-1 * (titleWidth/2) + svgWidth,
-            }, 'flip'
-        )
-        .to(svgRef.current,
-            {
-                "--clip-value": '11%',
-                scaleX:-1,
-                duration: 0.5,
-            }, 'flip'
-        )
-
-    // tl.addLabel('text')
-    //     .to(title)
-    const split = new SplitText(title);
-  //  console.log(split);
-    const words = split.words;
-    const chars = split.chars;
-
-    // Animate each letter
-    opening_animation.addLabel('letters', "-=0.15")
-    opening_animation.fromTo(words, {
-        x: -250,
-        opacity: 0
-    }, {
-        // x: svgWidth * 0.5,
-        opacity: 1,
-        x:0,
-        stagger: 0, // Add a slight delay between each letter
-        duration: 0.33,
-        delay:0,
-        ease: "power1.out"
-    }, "letters");
-
-    opening_animation.to(svgRef.current, 
-        {
-            scaleY: 0.9,
-            ease: "expo.out",
-            duration: 1.5
-        }, "letters"
-    )
-
-    opening_animation.fromTo(chars.splice(6), {
-        opacity: 0,
-        x: -50,
-    }, {
-        opacity: 1,
-        // x: svgWidth * 0.5,
-        x:0,
-        delay:0.5,
-        stagger: -0.05, // Add a slight delay between each letter
-        duration: 0.1,
-        ease: "linear"
-
-    }, "letters");
-
-    // opening_animation.fromTo(chars.splice(6), {
-    //     opacity: 0,
-    //     color: 'var(--background-color)',
-    //     textShadow: "0px 0px 1px black",
-    // }, {
-    //     opacity: 1,
-    //     color: 'black',
-    //     // x: svgWidth * 0.5,
-    //     delay:0.5,
-    //     stagger: 0, // Add a slight delay between each letter
-    //     duration: 0.5,
-    //     ease: "linear"
-        
-    // }, "letters");
-
-
-    // opening_animation.fromTo(chars.splice(6,chars.length), {
-    //     opacity: 0,
-    //     x: -50,
-    // }, {
-    //     opacity: 1,
-    //     // x: svgWidth * 0.5,
-    //     x:0,
-    //     stagger: 0.1, // Add a slight delay between each letter
-    //     duration: 0.1,
-    //     ease: "back.out"
-    // }, "letters");
-
-
-  //  console.log('tl', opening_animation);
+    opening_animation.to({},{});
+   
     return opening_animation
 }
 

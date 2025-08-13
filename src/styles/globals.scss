@@ -1,4 +1,36 @@
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/Nexa-Regular.woff2') format('woff2'),
+       url('/fonts/Nexa-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/Nexa-Bold.woff2') format('woff2'),
+       url('/fonts/Nexa-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/Nexa-XBold.oft') format('opentype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Nexa';
+  src: url('/fonts/Nexa-Light.oft') format('opentype');
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   /* CSS HEX */
@@ -217,11 +249,11 @@ main{
     display: block;
     margin: auto;
     width:auto;
-    height:200%;
+    height:100%;
     // aspect-ratio: 1 / 2;
     overflow: visible;
     position: absolute;
-    clip-path:  xywh(calc(0% + var(--clip-value)) 0 calc(100% - var(--clip-value)) 100%);
+    // clip-path:  xywh(calc(0% + var(--clip-value)) 0 calc(100% - var(--clip-value)) 100%);
     circle{
       // outline: rgba(255, 255, 255, 0.486) 0.1px solid;
       // border-radius: 50%;
@@ -237,6 +269,9 @@ main{
   justify-content: center;
   gap:0.5ch;
   height:100%;
+  font-family: 'Nexa';
+  font-weight: 400;
+  font-size: 1rem;
   .spinner{
     display:block;
     height:100%;
@@ -357,6 +392,7 @@ article{
   padding:0 1em;
   max-width:var(--max-width);
   margin: auto;
+  min-height: 75vh;
   #article_icon{
     position: absolute;
     font-size: var(--page-icon-ft-size);
@@ -693,18 +729,23 @@ article{
 @mixin nth-children($count, $height) {
   @for $i from 2 through $count {
     &:nth-child(#{$i}) {
-      top: calc(($i - 1) * $height);
+      // top: ($i - 1) * $height;
+      // z-index: $i;
+      // z-index: -1;
+      top: var(--top-calculated, calc(($i - 1) * $height));
     }
   }
 }
 .service-list{
+  outline: red dashed 1px;
   --bg: white;
   --titleHeight: 4.5rem;
-  $count : 7;
+  $count : 12;
   // background:var(--bg);
   max-width:900px;
   margin:2rem auto;
   position: relative;
+  isolation: isolate;
   // height: calc(($count) * var(--titleHeight));
   .service{
     position: sticky;
@@ -712,18 +753,25 @@ article{
     background:var(--bg);
     border:1px solid grey;
     padding:0.5rem;
+    overflow: hidden;
     h2{
       margin:0 0 0.5rem 0;
       font-size:3rem;
     }
-
+    
     &:nth-child(1){
       top: 0px;
       h2{
         margin-top:0px;
       }
     }
-    @include nth-children($count, var(--titleHeight));
+    @include nth-children($count, 4.5rem);
+  }
+  &.collapsed{
+    .service{
+      top: unset;
+      height:var(--titleHeight);
+    }
   }
 }
 
@@ -751,3 +799,93 @@ article{
     background-position:center;
     background-repeat: no-repeat;
   }
+
+form{
+  border-radius:12px;
+  border: 2px solid black;
+  padding:1rem;
+  max-width:550px;
+  // margin:auto;
+  .flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: start;
+    align-items: start;
+    gap:1rem 0.5rem;
+  }
+  label{
+    display:block;
+    font-size:1.2rem;
+    margin-bottom:0.2em;
+  }
+  input,select{
+    font-size:1rem;
+    padding:0.2em;
+  }
+  textarea{
+    min-height:100px;
+    width:100%;
+    max-width:100%;
+    max-height:50vh;
+    padding:5px;
+  }
+  button{
+    font-size:1.5rem;
+    padding:0.25rem;
+    width:100%;
+    margin-top:1rem;
+  }
+  .input-wrapper{
+    &.name{
+      flex:30% 1 1;
+    }
+    &.company{
+      flex:30% 1 1;
+    }
+    &.method{
+      flex:100% 1 1;
+      label{
+        display:inline;
+      }
+      select{
+        width:100%;
+      }
+    }
+    &.message{
+      flex:100% 1 1;
+    }
+    &:focus,&:focus-within{
+      outline:black solid 1px;
+    }
+  }
+  
+}
+
+.particles-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.dot-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.dot-grid__wrap {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.dot-grid__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}

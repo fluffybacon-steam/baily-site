@@ -6,89 +6,71 @@ const Logo = React.forwardRef((props, ref) => {
     const arrow_color = props?.arrowcolor ?? '#f000c5';
     const grad_start = props?.gradstart ?? '#4e38e9';
     const grad_stop = props?.gradstop ?? '#09f327';
-
+    
     return (
       <svg
-        width="55.340633mm"
-        height="101.68129mm"
-        viewBox="33.243542 46.394835 55.340633 102.68129"
+        id="Layer_1"
+        data-name="Layer 1"
+        viewBox="0 0 584.61847 179.80663"
         version="1.1"
-        id="svg1"
+        width="584.61847"
+        height="179.80663"
         xmlns="http://www.w3.org/2000/svg"
+        xmlnsXlink="http://www.w3.org/2000/svg"
         ref={ref}
         {...props}
       >
-        <defs id="defs1">
-          <linearGradient id="linearGradient1">
-            <stop
-              style={{ stopColor: grad_start, stopOpacity: 1 }}
-              offset="0"
-              id="stop1"
-            />
-            <stop
-              style={{ stopColor:  grad_stop, stopOpacity: 1 }}
-              offset="1"
-              id="stop2"
-            />
-          </linearGradient>
-          <radialGradient
-            xlinkHref="#linearGradient1"
-            id="radialGradient2"
-            cx="37.627304"
-            cy="50.778599"
-            fx="40.627304"
-            fy="50.778599"
-            r="4.3837638"
+        <defs id="defs2">
+          <linearGradient
+            id="linear-gradient"
+            x1="262.32999"
+            y1="546.90997"
+            x2="363.23001"
+            y2="546.90997"
             gradientUnits="userSpaceOnUse"
-            style={{ transformOrigin: "37.627304px 50.778599px" }}
-          />
+          >
+            <stop offset="0" stopColor="#2d388a" id="stop1" />
+            <stop offset="1" stopColor="#00aeef" id="stop2" />
+          </linearGradient>
         </defs>
-        <g id='arrow'>
-
-          <rect
+        <g id="g2" transform="translate(-262.325,-454.21838)">
+          <polyline
             style={{
-              // fill: arrow_color,
-              fill: 'blue',
-              fillOpacity: 1,
-              strokeWidth: 0.521,
-              strokeDasharray: "none",
-              paintOrder: "stroke fill markers",
+              fill: 'none',
+              stroke: 'url(#linear-gradient)',
+              strokeWidth: '27.57px',
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
             }}
-            id="line2"
-            width="74.523979"
-            height="9"
-            x="14.1"
-            y="93"
-            ry="4.5"
-            />
-          <rect
-            style={{
-              fill: arrow_color,
-              fillOpacity: 1,
-              strokeWidth: 0.521,
-              strokeDasharray: "none",
-              paintOrder: "stroke fill markers",
-            }}
-            id="line1"
-            width="74.523979"
-            height="9"
-            x="58.182587"
-            y="4.7993693"
-            ry="4.5"
-            transform="rotate(45)"
-            />
+            points="276.11 620.24 349.45 546.91 276.11 473.57"
+            id="polyline2"
+          />
           <circle
-            style={{
-              fill: "url(#radialGradient2)",
-              strokeWidth: 0.272026,
-              strokeDasharray: "none",
-            }}
-            id="circle1"
-            cx="37.743542"
-            cy="50.894836"
-            r="4.5"
-            />
-            </g>
+            fill="#00aeef"
+            cx="388.38"
+            cy="546.90997"
+            r="18.469999"
+            id="circle2"
+          />
+        </g>
+        <text
+          style={{
+            fill: '#58595b',
+            fontFamily: 'Nexa',
+            fontSize: '92.07px',
+            fontWeight: 700,
+          }}
+          id="text3"
+          x="173.855"
+          y="69.951622"
+        >
+          <tspan x="173.855" y="69.951622" id="tspan2">
+            hohman
+          </tspan>
+          <tspan x="173.855" y="153.16162" id="tspan3">
+            digital
+          </tspan>
+        </text>
       </svg>
     );
   })

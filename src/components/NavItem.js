@@ -25,6 +25,8 @@ const NavItem = (props) =>{
     const main = document.querySelector('main');
     const masthead = document.querySelector('#masthead');
     const coverup = document.querySelector("#coverup");
+    const animated_nav = document.querySelector(".animated-nav");
+    console.log("animated_nav",animated_nav);
     if (icon) {
 
       const iconRect = icon.getBoundingClientRect();
@@ -67,10 +69,14 @@ const NavItem = (props) =>{
         }
       });
       
-      to_page_tl.set('#coverup', {
-        backgroundColor: "var(--background-color)",
+      to_page_tl.to(animated_nav, {
+        opacity: 0,
         duration: 0.5,
-      }, 'fade');
+      });
+      // to_page_tl.set('#coverup', {
+      //   backgroundColor: "var(--background-color)",
+      //   duration: 0.5,
+      // }, 'fade');
 
       const rootStyles = getComputedStyle(document.documentElement);
       const page_icon_ft_size = rootStyles.getPropertyValue('--page-icon-ft-size').trim();

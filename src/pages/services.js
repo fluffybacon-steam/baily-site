@@ -30,9 +30,6 @@ const Services = () => {
             <h1>Our Services</h1>
             <hr />
             <ServiceList />
-            <div>
-                <h2>Reach out today!</h2>
-            </div>
         </article>
     )   
 }

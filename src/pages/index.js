@@ -47,7 +47,7 @@ export default function Home() {
   return (
     <>
         <HeroText text={'Hohman Digital'}/>
-        <div className='animated-nav' ref={navRef}>
+        {/* <div className='animated-nav' ref={navRef}>
           <NavItem
             number={1}
             styles={styles}
@@ -84,7 +84,7 @@ export default function Home() {
             excerpt="Collection of my thoughts and 2 cents"
             grid_area="2 / 2 / 3 / 3"
           />
-        </div>
+        </div> */}
         <div style={{height: '300px'}}></div>
     </>
   )

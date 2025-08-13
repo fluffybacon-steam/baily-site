@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -15,24 +15,43 @@ export default function ServiceList() {
             const serviceList = serviceListRef.current;
             const last_child = serviceList.children[serviceList.children.length - 1];
             console.log("last child", last_child);
+            const styles = getComputedStyle(serviceList);
+            const titleHeight = styles.getPropertyValue('--titleHeight').trim();
+
+            setTopCalculated(serviceList);
+
             const tl = gsap.timeline({
                 scrollTrigger:{
                     trigger:last_child,
-                    start: "top 50%",
+                    start:`top 50%`,
                     end: `bottom 50%`,
-                    scrub: 1,
-                    markers:true
-                }
+                    scrub: 1.5,
+                    markers:false,
+                    // toggleActions: "play pause pause pause"
+                },
+                duration:0
             });
-            tl.to(last_child, {
-                marginTop: last_child.offsetHeight
-            })
+            const allServices = Array.from(serviceList.querySelectorAll(".service"));
+            const otherServices = allServices.filter(el => el !== last_child);
+            // allServices.forEach((el) => {
+            //     const currentTop = el.style.top;
+
+            //     tl.to(el, {
+            //         top: `${currentTop - 100}px`,
+            //     }, 0);
+            // });
+            tl.to(serviceList, {
+                translateY: -window.outerHeight
+            });
+            return () => {
+                if(tl){
+                    tl.kill();
+                }
+            };
         }
-        return () => {
-            tl.kill();
-        };
 
     }, { scope: serviceListRef } );
+
 
     return (
         <div ref={serviceListRef } className="service-list">
@@ -96,6 +115,11 @@ export default function ServiceList() {
             >
                 After working with computers for a living, you learn a thing or two about IT. We offer support for any hardware, networking, or software problems you may have.
             </Item>
+            {/* <Item 
+                icon=""
+                title=""
+            >
+            </Item> */}
         </div>
     )
 }
@@ -110,4 +134,37 @@ const Item = (props) =>{
         </div>
     )
 }
+
+function setTopCalculated(serviceList){
+    const styles = getComputedStyle(serviceList.children[0]);
+    console.log(styles.padding);
+    const paddingTop = parseFloat(styles.padding) || 0;
+    let totalHeight = 0;
+
+    Array.from(serviceList.children).forEach((child) => {
+        const h2 = child.querySelector('h2');
+        const h2Height = h2 ? getFullRenderedHeight(child, h2) : 0;
+
+        // Set the CSS variable --top-calculate
+        child.style.setProperty('--top-calculated', `${totalHeight}px`);
+
+        // Add this h2's height to the running total
+        totalHeight += h2Height;
+    });
+}
+
+function getFullRenderedHeight(parent, el) {
+    const p_styles = getComputedStyle(parent);
+    const padding = parseFloat(p_styles.padding) || 0;
+    
+    const el_style = getComputedStyle(el);
+
+    const marginTop = parseFloat(el_style.marginTop) || 0;
+    const marginBottom = parseFloat(el_style.marginBottom) || 0;
+
+    const totalHeight = el.offsetHeight + marginTop + marginBottom + padding;
+
+    return totalHeight;
+}
+
 
