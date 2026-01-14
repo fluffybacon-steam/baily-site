@@ -55,7 +55,7 @@ const Logo = React.forwardRef((props, ref) => {
         </g>
         <text
           style={{
-            fill: '#58595b',
+            fill: 'currentColor',
             fontFamily: 'Nexa',
             fontSize: '92.07px',
             fontWeight: 700,

@@ -29,7 +29,7 @@ const HeroText = ({ text }) => {
                 leaving_animation.play();
             });
 
-        opening_animation.duration(0).play();   
+        opening_animation.duration(0.25).play();   
 
         // leaving_animation.duration(6).repeat(10).play();  
         
@@ -55,7 +55,7 @@ const HeroText = ({ text }) => {
             experiences
         </div>
         <div ref={arrowDownRef} className='arrow-down'>
-            <svg
+            {/* <svg
                 height="20"
                 viewBox="0 -960 560 800"
                 width="14"
@@ -68,7 +68,7 @@ const HeroText = ({ text }) => {
                 <path
                     d="M 280,-160 0,-440 l 56,-57 184,184 v -287 h 80 v 287 l 184,-183 56,56 z m -40,-520 v -120 h 80 v 120 z m 0,-200 v -80 h 80 v 80 z"
                     id="path1" />
-            </svg>
+            </svg> */}
         </div>
     </>
   );
@@ -88,6 +88,7 @@ const craftHeadlineAnimation = (headlineEl, arrowEl) => {
     let b_span = spans[0];
     spans.forEach(span =>{
         const width = span.offsetWidth;
+        console.log("span width", width);
         b_span = (width >= b_span.offsetWidth) ? span : b_span;
     })
     spinner.style.width = b_span.offsetWidth + "px";

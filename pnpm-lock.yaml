@@ -44,6 +44,9 @@ importers:
       text-to-svg:
         specifier: ^3.1.5
         version: 3.1.5
+      three:
+        specifier: ^0.182.0
+        version: 0.182.0
       url-loader:
         specifier: ^4.1.1
         version: 4.1.1(webpack@5.99.9)
@@ -2731,6 +2734,9 @@ packages:
 
   third-party-capital@1.0.20:
     resolution: {integrity: sha512-oB7yIimd8SuGptespDAZnNkzIz+NWaJCu2RMsbs4Wmp9zSDUM8Nhi3s2OOcqYuv3mN4hitXc8DVx+LyUmbUDiA==}
+
+  three@0.182.0:
+    resolution: {integrity: sha512-GbHabT+Irv+ihI1/f5kIIsZ+Ef9Sl5A1Y7imvS5RQjWgtTPfPnZ43JmlYI7NtCRDK9zir20lQpfg8/9Yd02OvQ==}
 
   through@2.3.8:
     resolution: {integrity: sha512-w89qg7PI8wAdvX60bMDP+bFoD5Dvhm9oLheFp5O4a2QF0cSBGsBX4qZmadPMvVqlLJBBci+WqGGOAPvcDeNSVg==}
@@ -5937,6 +5943,8 @@ snapshots:
       opentype.js: 0.11.0
 
   third-party-capital@1.0.20: {}
+
+  three@0.182.0: {}
 
   through@2.3.8: {}
 

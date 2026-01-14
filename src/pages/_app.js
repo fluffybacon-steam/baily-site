@@ -27,16 +27,16 @@ export default function App({ Component, pageProps }) {
   return (
     <>
       <div style={{ width: '100%', height: '100vh', position: 'fixed' }}>
-        <Particles
-          particleColors={['#ffffff', '#ffffff']}
-          particleCount={200}
+        {/* <Particles
+          particleColors={['var(--ball-light)', 'var(--ball-dark)']}
+          particleCount={100000}
           particleSpread={10}
-          speed={0.1}
-          particleBaseSize={100}
+          speed={0.05}
+          particleBaseSize={500}
           moveParticlesOnHover={false}
-          alphaParticles={false}
+          alphaParticles={true}
           disableRotation={false}
-        />
+        /> */}
         {/* <DotGrid
           dotSize={10}
           gap={15}
@@ -55,7 +55,7 @@ export default function App({ Component, pageProps }) {
           <main id='page'>
             <Component {...pageProps}/>
           </main>
-          <Footer />
+          {/* <Footer /> */}
         </div>
       </div>
       <div id='coverup'></div>

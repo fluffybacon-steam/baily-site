@@ -7,6 +7,9 @@ import React, {useEffect, useRef } from 'react';
 import NavItem from '@/components/NavItem'
 
 import HeroText from '@/components/HeroText';
+import SplitText from "@/components/SplitText";
+
+import OscillatingCircle from '@/components/OscillatingCircle';
 
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -85,7 +88,34 @@ export default function Home() {
             grid_area="2 / 2 / 3 / 3"
           />
         </div> */}
-        <div style={{height: '300px'}}></div>
+        <div style={{height: '400px', fontSize:'2rem', display:'flex', justifyContent:"center", flexDirection: "column"}}>
+          <OscillatingCircle />
+          <SplitText
+            text="Development Ongoing..."
+            delay={20}
+            duration={0.4}
+            ease="power2.out"
+            splitType="chars"
+            from={{ opacity: 0, y: 40 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.1}
+            rootMargin="-100px"
+            textAlign="center"
+          />
+          <br/>
+           <SplitText
+            text="Coming Soon!"
+            delay={20}
+            duration={0.6}
+            ease="power3.out"
+            splitType="chars"
+            from={{ opacity: 0, y: -40 }}
+            to={{ opacity: 1, y: 0 }}
+            threshold={0.1}
+            rootMargin="-100px"
+            textAlign="center"
+          />
+        </div>
     </>
   )
 }

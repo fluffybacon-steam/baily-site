@@ -51,7 +51,7 @@ export default function Footer() {
         <div className='text-wrapper'>
             <div className='contact-info'>
                 <a className='email' href='mailto:baily@hohmandigital.com'>baily@hohmandigital.com</a>
-                <a className='phone' href='tel:+17174550894'>(717) 455-0894</a>
+                <a className='phone' href='tel:+17178750386'>(717) 875-0386</a>
             </div>
             <div className='copyright'>© Copyright 2025 Hohman Digital LLC</div>
         </div>
@@ -189,7 +189,7 @@ const SocialCircle = ({socials}) =>{
                         M0,100 C0,0 100,0 100,100
                         " 
                 />
-                <path ref={pathRef} fill="var(--background)" stroke="transparent" strokeWidth="1" d="
+                <path ref={pathRef} fill="var(--footer-background)" stroke="transparent" strokeWidth="1" d="
                         M0,100 C0,100 100,100 100,100
                         " 
                 />
