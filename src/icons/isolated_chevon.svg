@@ -1,0 +1,72 @@
+<svg
+   id="Layer_1"
+   data-name="Layer 1"
+   viewBox="0 0 430.85757 744"
+   version="1.1"
+   width="430.85757"
+   height="744"
+   sodipodi:docname="isolated_chevon.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="1.0927419"
+     inkscape:cx="215.51292"
+     inkscape:cy="372"
+     inkscape:window-width="2560"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="Layer_1" />
+  <defs
+     id="defs2">
+    <style
+       id="style1">
+      .cls-1 {
+        fill: #00aeef;
+      }
+
+      .cls-2 {
+        fill: none;
+        stroke: url(#linear-gradient);
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 117.72px;
+      }
+    </style>
+    <linearGradient
+       id="linear-gradient"
+       x1="202.03"
+       y1="540"
+       x2="632.88"
+       y2="540"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#2d388a"
+         id="stop1" />
+      <stop
+         offset="1"
+         stop-color="#00aeef"
+         id="stop2" />
+    </linearGradient>
+  </defs>
+  <path
+     id="polyline2"
+     style="fill:none;stroke:url(#linear-gradient);stroke-width:117.72px;stroke-linecap:round;stroke-linejoin:round"
+     class="cls-2"
+     transform="translate(-202.02,-168)"
+     d="M 260.88,853.14 574.02,540 260.88,226.86"
+     inkscape:label="path" />
+</svg>

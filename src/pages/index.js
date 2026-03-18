@@ -40,7 +40,12 @@ export default function Home() {
             start: "top 25%", 
             end: `+=500`, 
             scrub: 1, 
-            // anticipatePin: 1
+            pinSpacing:   true,
+            onRefresh: () => {
+                // ScrollTrigger creates a .pin-spacer wrapper — make it visible
+                const pinSpacer = nav.closest('.gsap-pin-spacer');
+                if (pinSpacer) pinSpacer.style.overflow = 'visible';
+            },
           },
       });
       animateNav(tl, nav,navLinks);
@@ -50,7 +55,7 @@ export default function Home() {
   return (
     <>
         <HeroText text={'Hohman Digital'}/>
-        {/* <div className='animated-nav' ref={navRef}>
+        <div className='animated-nav' ref={navRef}>
           <NavItem
             number={1}
             styles={styles}
@@ -87,9 +92,9 @@ export default function Home() {
             excerpt="Collection of my thoughts and 2 cents"
             grid_area="2 / 2 / 3 / 3"
           />
-        </div> */}
+        </div>
         <div style={{height: '400px', fontSize:'2rem', display:'flex', justifyContent:"center", flexDirection: "column"}}>
-          <OscillatingCircle />
+          {/* <OscillatingCircle /> */}
           <SplitText
             text="Development Ongoing..."
             delay={20}
@@ -115,352 +120,87 @@ export default function Home() {
             rootMargin="-100px"
             textAlign="center"
           />
+          <div class='debug-target'></div>
         </div>
     </>
   )
 }
 
-const animateNav = (tl, nav, navLinks) =>{
-  console.log('animateNav ran', nav);
+const animateNav = (tl, nav, navLinks) => {
+    const borderGirth = getPropertyValue(nav, '--padding');
+    const gridGap     = getPropertyValue(nav, '--gap');
 
-  const borderGirth = getPropertyValue(nav, '--padding');
-  const gridGap = getPropertyValue(nav, '--gap');
-
-  console.log('gridGap', gridGap);
-  console.log('borderGirth', borderGirth);
-
-  //for readability
-  if(true){
     const Boxes1 = nav.querySelectorAll('div[data-num="1"]');
     const Boxes2 = nav.querySelectorAll('div[data-num="2"]');
     const Boxes3 = nav.querySelectorAll('div[data-num="3"]');
     const Boxes4 = nav.querySelectorAll('div[data-num="4"]');
-    console.log('Boxes1',Boxes1);
-    ///Top
-    if(!Boxes1[0].classList.contains('animated')){
-      Boxes1[0].style.placeSelf = 'start end';
-      tl.add(gsap.fromTo(Boxes1[0], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`, 
-          ease:'none',
-        }
-      ), 'top',
-      );
-    }
-    if(!Boxes2[0].classList.contains('animated')){
-      Boxes2[0].style.placeSelf = 'start start';
-      tl.add(gsap.fromTo(Boxes2[0], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'top'
-      );
-    }
-    //Top Sides
-    if(!Boxes1[3].classList.contains('animated')){
-      Boxes1[3].style.placeSelf = 'start start';
-      tl.add(gsap.fromTo(Boxes1[3], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'top-side'
-      );
-    }
-    if(!Boxes2[1].classList.contains('animated')){
-      Boxes2[1].style.placeSelf = 'start end';
-      tl.add(gsap.fromTo(Boxes2[1], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'top-side'
-      );
-    }
-    //Bottom-side
-    if(!Boxes3[3].classList.contains('animated')){
-      Boxes3[3].style.placeSelf = 'start start';
-      tl.add(gsap.fromTo(Boxes3[3], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'bottom-side'
-      );
-    }
-    if(!Boxes4[1].classList.contains('animated')){
-      Boxes4[1].style.placeSelf = 'start end';
-      tl.add(gsap.fromTo(Boxes4[1], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'bottom-side'
-      );
-    }
-    //Bottom
-    if(!Boxes3[2].classList.contains('animated')){
-      Boxes3[2].style.placeSelf = 'end start';
-      tl.add(gsap.fromTo(Boxes3[2], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'bottom'
-      );
-    }
-    if(!Boxes4[2].classList.contains('animated')){
-      Boxes4[2].style.placeSelf = 'end end';
-      tl.add(gsap.fromTo(Boxes4[2], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'bottom'
-      );
-    }
-    //inner
-    if(!Boxes1[1].classList.contains('animated')){
-      Boxes1[1].style.width = borderGirth/2;
-      Boxes1[1].style.placeSelf = 'start end';    
-      tl.add(gsap.fromTo(Boxes1[1], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes1[1], 
-        { 
-          width: borderGirth/2
-        },
-        { 
-          width: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes1[2].classList.contains('animated')){
-      Boxes1[2].style.placeSelf = 'end start';
-      Boxes1[2].style.height =  borderGirth/2;
-      tl.add(gsap.fromTo(Boxes1[2], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes1[2], 
-        { 
-          height: borderGirth/2
-        },
-        { 
-          height: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes2[3].classList.contains('animated')){
-      Boxes2[3].style.placeSelf = 'start start';
-      Boxes2[3].style.width = borderGirth/2;
-      tl.add(gsap.fromTo(Boxes2[3], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes2[3], 
-        { 
-          width: borderGirth/2
-        },
-        { 
-          width: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes2[2].classList.contains('animated')){
-      Boxes2[2].style.placeSelf = 'end end';
-      Boxes2[2].style.height =  borderGirth/2;
-      tl.add(gsap.fromTo(Boxes2[2], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes2[2], 
-        { 
-          height: borderGirth/2
-        },
-        { 
-          height: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes3[0].classList.contains('animated')){
-      Boxes3[0].style.placeSelf = 'start start';
-      Boxes3[0].style.height =  borderGirth/2;
-      tl.add(gsap.fromTo(Boxes3[0], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes3[0], 
-        { 
-          height: borderGirth/2
-        },
-        { 
-          height: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes3[1].classList.contains('animated')){
-      Boxes3[1].style.placeSelf = 'end end';
-      Boxes3[1].style.width = borderGirth/2;
-      tl.add(gsap.fromTo(Boxes3[1], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes3[1], 
-        { 
-          width: borderGirth/2
-        },
-        { 
-          width: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes4[0].classList.contains('animated')){
-      Boxes4[0].style.placeSelf = 'start end';
-      Boxes4[0].style.height =  borderGirth/2;
-      tl.add(gsap.fromTo(Boxes4[0], 
-        { 
-          width:`0%`,
-        },
-        { 
-          width: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes4[0], 
-        { 
-          height: borderGirth/2
-        },
-        { 
-          height: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-    if(!Boxes4[3].classList.contains('animated')){
-      Boxes4[3].style.placeSelf = 'end start';
-      Boxes4[3].style.width = borderGirth/2;
-      tl.add(gsap.fromTo(Boxes4[3], 
-        { 
-          height:`0%`,
-        },
-        { 
-          height: `100%`,
-          ease:'none',
-        }
-      ), 'inner'
-      );
-      tl.add(gsap.fromTo(Boxes4[3], 
-        { 
-          width: borderGirth/2
-        },
-        { 
-          width: borderGirth,
-          ease:'none',
-        }
-      ), 'gap'
-      );
-    }
-  }
 
-  tl.add(
-    gsap.to(nav, {gap: gridGap}),
-    'gap'
-  );
-  tl.add(
-    gsap.to(navLinks, {opacity: 1, pointerEvents: 'auto'}),
-    'gap'
-  );
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-  tl.to({},{
-    duration:5
-  });
+    const skip = (el) => el.classList.contains('animated');
 
-  //Gap
-  // if(tl.labels == {}){
-  //   tl.destroy();
-  // } else {
-  //   tl.to({}, { duration: 2});
-  // }
+    const growW = (el, label) =>
+        tl.add(gsap.fromTo(el, { width: '0%'  }, { width: '100%',  ease: 'none' }), label);
 
-  return tl;
-}
+    const growH = (el, label) =>
+        tl.add(gsap.fromTo(el, { height: '0%' }, { height: '100%', ease: 'none' }), label);
+
+    // ── Outer edges — order matters, draws like a rectangle ──────────────────
+
+    // 1. Top bar
+    if (!skip(Boxes1[0])) { Boxes1[0].style.placeSelf = 'start end';   growW(Boxes1[0], 'top'); }
+    if (!skip(Boxes2[0])) { Boxes2[0].style.placeSelf = 'start start'; growW(Boxes2[0], 'top'); }
+
+    // 2. Top sides — grow downward from top corners
+    if (!skip(Boxes1[3])) { Boxes1[3].style.placeSelf = 'start start'; growH(Boxes1[3], 'top-side'); }
+    if (!skip(Boxes2[1])) { Boxes2[1].style.placeSelf = 'start end';   growH(Boxes2[1], 'top-side'); }
+
+    // 3. Bottom sides — grow downward to meet bottom
+    if (!skip(Boxes3[3])) { Boxes3[3].style.placeSelf = 'start start'; growH(Boxes3[3], 'bottom-side'); }
+    if (!skip(Boxes4[1])) { Boxes4[1].style.placeSelf = 'start end';   growH(Boxes4[1], 'bottom-side'); }
+
+    // 4. Bottom bar
+    if (!skip(Boxes3[2])) { Boxes3[2].style.placeSelf = 'end start';   growW(Boxes3[2], 'bottom'); }
+    if (!skip(Boxes4[2])) { Boxes4[2].style.placeSelf = 'end end';     growW(Boxes4[2], 'bottom'); }
+    // ── Inner corners ─────────────────────────────────────────────────────────
+    // Each corner: grows in one axis at 'inner', then fattens to full border at 'gap'
+
+    const innerCornerV = (el, placeSelf) => {
+        if (skip(el)) return;
+        el.style.placeSelf = placeSelf;
+        el.style.width     = borderGirth / 2;
+        tl.add(gsap.fromTo(el, { height: '0%'          }, { height: '100%',     ease: 'none' }), 'inner');
+        tl.add(gsap.fromTo(el, { width: borderGirth / 2 }, { width: borderGirth, ease: 'none' }), 'gap');
+    };
+
+    const innerCornerH = (el, placeSelf) => {
+        if (skip(el)) return;
+        el.style.placeSelf = placeSelf;
+        el.style.height    = borderGirth / 2;
+        tl.add(gsap.fromTo(el, { width: '0%'           }, { width: '100%',       ease: 'none' }), 'inner');
+        tl.add(gsap.fromTo(el, { height: borderGirth / 2 }, { height: borderGirth, ease: 'none' }), 'gap');
+    };
+
+    innerCornerV(Boxes1[1], 'start end');    // Box1 — top-right vertical
+    innerCornerH(Boxes1[2], 'end start');    // Box1 — bottom-left horizontal
+
+    innerCornerV(Boxes2[3], 'start start'); // Box2 — top-left vertical
+    innerCornerH(Boxes2[2], 'end end');     // Box2 — bottom-right horizontal
+
+    innerCornerH(Boxes3[0], 'start start'); // Box3 — top-left horizontal
+    innerCornerV(Boxes3[1], 'end end');     // Box3 — bottom-right vertical
+
+    innerCornerH(Boxes4[0], 'start end');   // Box4 — top-right horizontal
+    innerCornerV(Boxes4[3], 'end start');   // Box4 — bottom-left vertical
+
+    // ── Reveal ────────────────────────────────────────────────────────────────
+    tl.add(gsap.to(nav,      { gap: gridGap }),                      'gap');
+    tl.add(gsap.to(navLinks, { opacity: 1, pointerEvents: 'auto' }), 'gap');
+
+    tl.to({}, { duration: 5 });
+
+    return tl;
+};
 
 function getPropertyValue(element, property_name) {
   const styles = getComputedStyle(element);

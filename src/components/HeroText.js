@@ -39,8 +39,9 @@ const HeroText = ({ text }) => {
   return (
     <>
         <div ref={titleWrapRef} className={'Hero'}>
-            {/* <h1 className="text">{textTop}</h1> */}
-            <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' />
+            <h1 className="text"><span>hohman</span><span>digital</span></h1>
+            <div className='ball'></div>
+            {/* <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' /> */}
         </div>
         <div ref={headlineRef} className="headline">
             Building 
