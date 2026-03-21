@@ -21,8 +21,6 @@ export class Chevron {
         angle    = 45,
         minAngle = 0,
         maxAngle = 90,
-        color1   = 'red',
-        color2   = 'green',
         camera   = null,
     } = {}) {
         this.c_height = height; 
@@ -132,22 +130,22 @@ export class Chevron {
         tl.to(this.root.position, { x, y, z, ...tweenVars }, 0);
  
         // Only add tilt if Z is actually changing
-        if (Math.abs(deltaZ) > 0.001) {
-            // Tilt toward destination: positive deltaZ (toward camera) pitches forward (negative X)
-            const peakRad = D2R(-Math.sign(deltaZ) * tiltAngle);
-            const half    = duration / 2;
+        // if (Math.abs(deltaZ) > 0.001) {
+        //     // Tilt toward destination: positive deltaZ (toward camera) pitches forward (negative X)
+        //     const peakRad = D2R(-Math.sign(deltaZ) * tiltAngle);
+        //     const half    = duration / 2;
  
-            tl.to(this.root.rotation, {
-                    [tiltAxis]: peakRad,
-                    duration:   half,
-                    ease:       tiltEase,
-                }, 0)
-              .to(this.root.rotation, {
-                    [tiltAxis]: 0,
-                    duration:   half,
-                    ease:       tiltEase,
-                }, half);
-        }
+        //     tl.to(this.root.rotation, {
+        //             [tiltAxis]: peakRad,
+        //             duration:   half,
+        //             ease:       tiltEase,
+        //         }, 0)
+        //       .to(this.root.rotation, {
+        //             [tiltAxis]: 0,
+        //             duration:   half,
+        //             ease:       tiltEase,
+        //         }, half);
+        // }
  
         return tl;
     }
@@ -218,31 +216,23 @@ export class Chevron {
  
         // Project current world position → viewport pixels
         const projected = this.root.position.clone().project(cam);
-        const vpX = ( projected.x + 1) / 2 * window.innerWidth;
         const vpY = (-projected.y + 1) / 2 * window.innerHeight;
- 
-        // Convert viewport px → document px (scroll-invariant)
-        const docX  = vpX + window.scrollX;
-        const docY  = vpY + window.scrollY;
-        const worldZ = this.root.position.z;  // preserve depth
- 
+
+        // Convert viewport px → document px (scroll-invariant) — Y only
+        const docY   = vpY + window.scrollY;
+        const worldZ = this.root.position.z;
+
         const update = () => {
-            // Convert document px back to current viewport px
-            const currentVpX =  docX - window.scrollX;
-            const currentVpY =  docY - window.scrollY;
- 
-            // Viewport px → NDC
-            const ndcX =  (currentVpX / window.innerWidth)  * 2 - 1;
+            const currentVpY = docY - window.scrollY;
             const ndcY = -(currentVpY / window.innerHeight) * 2 + 1;
- 
+
             cam.updateMatrixWorld();
-            const world = _ndcToWorld(ndcX, ndcY, worldZ, cam);
-            this.root.position.set(world.x, world.y, world.z);
+            const world = _ndcToWorld(0, ndcY, worldZ, cam);
+            this.root.position.y = world.y;  // Y only — X and Z remain free
         };
- 
+
         window.addEventListener('scroll', update, { passive: true });
- 
-        // Store so dispose() can clean up if lock is still active
+
         this._unlockScroll = () => window.removeEventListener('scroll', update);
         return this._unlockScroll;
     }

@@ -15,21 +15,21 @@ const HeroText = ({ text }) => {
   const svgRef = useRef(null);
   const headlineRef = useRef(null);
   const arrowDownRef = useRef(null);
-  const textTop = text || 'Hohman Digital';
+//   const textTop = text || 'Hohman Digital';
 
   useGSAP(() => {
     //  console.log('svgRef',svgRef.current);
-    if (svgRef.current && titleWrapRef.current && headlineRef.current && arrowDownRef.current) {
+    if (titleWrapRef.current && headlineRef.current) {
 
-        const opening_animation = craftOpeningAnimation(titleWrapRef,svgRef);
-        const leaving_animation = craftHeadlineAnimation(headlineRef.current, arrowDownRef.current);
+        // const opening_animation = craftOpeningAnimation(titleWrapRef,svgRef);
+        const headline_animation = craftHeadlineAnimation(headlineRef.current);
 
+        headline_animation.then(() => {
+            console.log(titleWrapRef.current.dataset);
+            titleWrapRef.current.dataset.animated = 1;
+        });
 
-        opening_animation.then(() => {
-                leaving_animation.play();
-            });
-
-        opening_animation.duration(0.25).play();   
+        headline_animation.duration(2).play();   
 
         // leaving_animation.duration(6).repeat(10).play();  
         
@@ -55,32 +55,17 @@ const HeroText = ({ text }) => {
             </div>
             experiences
         </div>
-        <div ref={arrowDownRef} className='arrow-down'>
-            {/* <svg
-                height="20"
-                viewBox="0 -960 560 800"
-                width="14"
-                fill="currentColor"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-            >
-                <defs
-                    id="defs1" />
-                <path
-                    d="M 280,-160 0,-440 l 56,-57 184,184 v -287 h 80 v 287 l 184,-183 56,56 z m -40,-520 v -120 h 80 v 120 z m 0,-200 v -80 h 80 v 80 z"
-                    id="path1" />
-            </svg> */}
-        </div>
+        <div ref={arrowDownRef} className='arrow-down'></div>
     </>
   );
 };
 
-const craftHeadlineAnimation = (headlineEl, arrowEl) => {
+const craftHeadlineAnimation = (headlineEl) => {
     const fadeInDur = 0.25
     const rollInDur = 0.25;
     const hangDur = 0.75;
     const rollOutDur = 0.15;
-    const showArrowDur = 1;
+    // const showArrowDur = 1;
 
     const spinner = headlineEl.querySelector('.spinner');
     const spans = spinner.querySelectorAll('span');
@@ -96,7 +81,7 @@ const craftHeadlineAnimation = (headlineEl, arrowEl) => {
     spinner.style.height = b_span.offsetHeight + "px";
     spans.forEach(span =>{
         span.classList.add("initialized");
-    // letter spacing
+        // letter spacing
         // let spacing = 0;
         // while (span.offsetWidth < b_span.offsetWidth){
         //     span.style.letterSpacing = spacing + "px";
@@ -202,36 +187,26 @@ const craftHeadlineAnimation = (headlineEl, arrowEl) => {
         // Add this span's animation to the master timeline
     });
 
-    masterTimeline.add(
-        gsap.fromTo(arrowEl, 
-            {
-                y:-50,
-                opacity:0,
-                clipPath:'inset(50% 0 0 0)'
-            },
-            {
-                y:0,
-                opacity:1,
-                duration: showArrowDur,
-                clipPath:'inset(0% 0 0 0)',
-                ease: 'power2.inOut'
-            }
-        )
-    );
+    // masterTimeline.add(
+    //     gsap.fromTo(arrowEl, 
+    //         {
+    //             y:-50,
+    //             opacity:0,
+    //             clipPath:'inset(50% 0 0 0)'
+    //         },
+    //         {
+    //             y:0,
+    //             opacity:1,
+    //             duration: showArrowDur,
+    //             clipPath:'inset(0% 0 0 0)',
+    //             ease: 'power2.inOut'
+    //         }
+    //     )
+    // );
   //  console.log(masterTimeline);
     // Play the master animation when needed
     return masterTimeline;
     // return leaving_animation;
-}
-
-const craftOpeningAnimation = (titleWrapRef,svgRef) =>{
-    const opening_animation = gsap.timeline({
-        paused:true,
-    });
-
-    opening_animation.to({},{});
-   
-    return opening_animation
 }
 
 export default HeroText;

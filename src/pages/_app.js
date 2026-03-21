@@ -26,12 +26,13 @@ export default function App({ Component, pageProps }) {
 
   return (
     <>
-      {<Scene />}
       <div id="smooth-wrapper">
         <div id="smooth-content">
           <Menu />
           <main id='page'>
-            <Component {...pageProps}/>
+            <Scene>
+              <Component {...pageProps}/>
+            </Scene>
           </main>
           <Footer />
         </div>

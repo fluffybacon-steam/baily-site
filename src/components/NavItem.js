@@ -136,10 +136,6 @@ const NavItem = (props) =>{
         <div className='icon-wrapper'>{props.icon}</div>
         <p>{props.excerpt}</p>
       </Link>
-      <div data-num={props.number} className={"shadowBox shadowBox-top"} style={{ gridArea: props.grid_area }}></div>
-      <div data-num={props.number} className={"shadowBox shadowBox-right"} style={{ gridArea: props.grid_area }}></div>
-      <div data-num={props.number} className={"shadowBox shadowBox-bottom"} style={{ gridArea: props.grid_area }}></div>
-      <div data-num={props.number} className={"shadowBox shadowBox-left"} style={{ gridArea: props.grid_area }}></div>
     </>
   )
 }

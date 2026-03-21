@@ -89,7 +89,8 @@ body{
   interpolate-size: allow-keywords;
   --background-color:#EEEE;
   --font-color:black;
-  --ball-light: #00aeef;
+  --brand-light-blue: #00aeef;
+  --brand-dark-blue: #2d388a;
   --ball-dark: white;
   --footer-background:#00aeef;
 }
@@ -261,7 +262,7 @@ main{
     width:var(--ball-size);
     height:auto;
     aspect-ratio: 1/1;
-    background:var(--ball-light);
+    background:var(--brand-light-blue);
     border-radius: 100%;
     display: block;
   }
@@ -318,22 +319,29 @@ main{
 
 // Arrow down
 .arrow-down{
-  margin:1em;
-  svg{
-    display: block;
-    width:1.5rem;
-    height:auto;
-    margin: auto;
+  margin:100px;
+}
+
+
+
+// Scroll Nav
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+@keyframes rotate-pinwheel {
+  to {
+    --angle: 360deg;
   }
 }
 
-// Scroll Nav
 .animated-nav{
   --font-size:1.5rem;
   --padding: 10px;
-  --border-color: var(--ball-light);
+  --border-color: var(--brand-light-blue);
   --gap:1em;
-  background:red;
+  // background:red;
   // --br: calc((var(--padding))/2);
   --br: 10px;
   margin: auto;
@@ -349,10 +357,10 @@ main{
   a{
     //grid-area: span 2 / span 2;
     --cell-padding : calc(var(--padding) * 2);
-    border-color:var(--ball-light);
-    border-style:solid;
-    border-width:var(--padding);
-    border-radius: var(--br);
+    border-color: rgba(255, 0, 0, 0.247);
+    // border-style:solid;
+    // border-width:var(--padding);
+    // border-radius: var(--br);
     overflow: hidden;
     padding:var(--cell-padding);
     display: block;
@@ -361,6 +369,48 @@ main{
     width: 100%;
     opacity: 0;
     pointer-events: none;
+    position: relative;
+    background:white;
+    isolation: isolate;
+    &:before{
+      content:"";
+      display:block;
+      width:100%;
+      height:100%;
+     background: conic-gradient(
+        from var(--angle),
+        var(--brand-dark-blue),
+        var(--brand-light-blue),
+        var(--brand-dark-blue)
+      );
+      background: conic-gradient(from var(--angle), var(--brand-dark-blue), var(--brand-light-blue), var(--brand-dark-blue), var(--brand-light-blue), var(--brand-dark-blue));
+      animation: rotate-pinwheel 5s linear infinite;
+      position:absolute;
+      clip-path: inset(0 0 0 0);
+      inset: 0px;
+      z-index: -2;
+      animation-play-state: paused;
+      border-radius: var(--br);
+    }
+    &:hover, &:focus{
+      &:before{
+        animation-play-state: running;
+      }
+    }
+    &:after{
+      content:"";
+      display:block;
+      background:rgb(255, 255, 255);
+      width: calc(100% - var(--padding)*2);
+      height: calc(100% - var(--padding)*2);
+      position: absolute;
+      inset: 0px;
+      margin: auto;
+      z-index: -1;
+    }
+    > * {
+      z-index: 1;
+    }
     h2{
       display: inline;
       text-align: left;
@@ -392,50 +442,131 @@ main{
     }
   }
   .shadowBox {
-    display:block;
-    width:var(--padding);
-    height:var(--padding);
-    background:var(--border-color);
-      // border-radius shorthand: top-left | top-right | bottom-right | bottom-left
-      &-top[data-num="1"] {
-        border-radius: var(--padding) 0 0 var(--padding);  // top-left only
+    --progress: 10%;
+    background: linear-gradient(90deg, (var(--brand-dark-blue) 0%, var(--brand-light-blue) 1%));
+
+    // Each box spans the entire grid
+    grid-column: 1 / -1;
+    grid-row:    1 / -1;
+
+
+    &-top-left, &-top-right{
+      width:0;
+      height: var(--padding);
+    }
+    &-bottom-left, &-bottom-right {
+      width:  0;    // animated to 100%
+      height: var(--padding);
+    }
+    // &-bottom-left{
+    // } 
+    // &-bottom-right {
+      //   background: linear-gradient(to bottom, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress)));
+      // }
+        
+    &-left-top, &-left-bottom,
+    &-right-top, &-right-bottom {
+      background: linear-gradient(to top, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress)));
+      height: 0;    // animated to 100%
+      width:  var(--padding);
+      border-radius: 0 0 var(--br) var(--br);
+    }
+
+    &-top-left{
+      background: linear-gradient(to right, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress)));
+      grid-column: 1 / 2;
+      grid-row:    1;
+      place-self: start end;
+      border-radius: var(--br) 0 0 var(--br);
+    }
+    &-top-right{
+      background: linear-gradient(to left, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress)));
+      grid-column: 2 / 3;
+      grid-row:    1;
+      place-self: start start;
+      border-radius: 0 var(--br) var(--br) 0;
+    }
+    &-left-top     { grid-column: 1; grid-row: 1; place-self: start start; }
+    &-left-bottom  { grid-column: 1; grid-row: 2; place-self: start start;   }
+    &-right-top    { grid-column: 2; grid-row: 1; place-self: start end;   }
+    &-right-bottom { grid-column: 2; grid-row: 2; place-self: start end;     }
+    &-bottom-left  { grid-column: 1; grid-row: 2; place-self: end start;   }
+    &-bottom-right { grid-column: 2; grid-row: 2; place-self: end end;     }
+
+
+    &-top    { place-self: start center; border-radius: var(--br) var(--br); }
+    &-left-top     {  margin-top:calc(var(--br)/2); }
+    &-right-top    {  margin-top:calc(var(--br)/2);}
+
+    &-bottom-left { place-self: end start; margin-left:calc(var(--br)/2); border-radius: 0 var(--br) var(--br) 0; 
+      background: linear-gradient(to left, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress)));}
+    &-bottom-right { place-self: end end; margin-right:calc(var(--br)/2); border-radius: var(--br) 0 0 var(--br); 
+      background: linear-gradient(to right, (var(--brand-dark-blue) 0%, var(--brand-light-blue) var(--progress))); }
+  }
+}
+
+
+.callouts_container{
+  // --tallest: 300px;
+  // grid-auto-rows: var(--tallest);
+  display:grid;
+  grid-auto-flow: row;
+  grid-auto-rows: auto;
+  gap:50px;
+  padding:0 1em;
+  .callout_wrapper {
+    --bg: var(--brand-light-blue);
+    --border-w: 2px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+
+    .circle-outline, .circle-color {
+      border-radius: 50%;
+    }
+
+    .circle-outline {
+      border: var(--border-w) solid black;
+      aspect-ratio: 1/1;
+      height:100%;
+      width:auto;
+    }
+
+    .circle-color {
+      position: relative;
+      isolation: isolate;
+      &:before{
+        content:"";
+        display: block;
+        border: var(--border-w) solid transparent;
+        box-sizing: border-box;
+        background:var(--bg);
+        // height:calc(100% - var(--border-w)*2);
+        height:100%;
+        width:auto;
+        aspect-ratio: 1/1;
+        left:0px;
+        // top:var(--border-w);
+        position: absolute;
+        border-radius: 50%;
+        z-index: -1;
       }
+    }
     
-      &-top[data-num="2"] {
-        border-radius: 0 var(--padding) var(--padding) 0;  // top-right only
+    h2 {
+      // background:rgba(255, 0, 0, 0.329);
+      margin: 0.5em 0;
+      font-size: 3rem; font-family: 'Nexa'; line-height: 1; font-weight: bold;text-wrap-style: balance;
+    }
+
+    .copy-wrapper {
+      grid-column: 2; 
+      grid-row: 2;
+      p{
+        margin:0.25em 0;
+        font-family: "Red Rose";
       }
-    
-      &-bottom[data-num="3"] {
-        border-radius: 0 0 0 var(--padding);  // bottom-left only
-      }
-    
-      &-bottom[data-num="4"] {
-        border-radius: 0 0 var(--padding) 0;  // bottom-right only
-      }
-    
-      // ── Outer sides ───────────────────────────────────────────────────────────
-    
-      &-left[data-num="1"] {
-        border-radius: var(--padding) 0 var(--padding) var(--padding);  // top-left only
-      }
-    
-      &-left[data-num="3"] {
-        border-radius: 0 0 0 var(--padding);  // bottom-left only
-      }
-    
-      &-right[data-num="2"] {
-        border-radius: 0 var(--padding) var(--padding) var(--padding);  // top-right only
-      }
-    
-      &-right[data-num="4"] {
-        border-radius: 0 0 var(--padding) 0;  // bottom-right only
-      }
-    
-      // ── Inner corners — no rounding, they butt up against the gap ─────────────
-    
-      &-inner {
-        border-radius: 0;
-      }
+    }
   }
 }
 

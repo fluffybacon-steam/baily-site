@@ -80,11 +80,11 @@ const SplitText = ({
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: 'el',
+        trigger: el,
         start:'center 50%',
         toggleActions: "play none none none",
         once: true,
-        markers:true,
+        markers:false,
         onToggle: (self) => {
           scrollTriggerRef.current = self;
         },

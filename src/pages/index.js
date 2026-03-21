@@ -10,6 +10,7 @@ import HeroText from '@/components/HeroText';
 import SplitText from "@/components/SplitText";
 
 import OscillatingCircle from '@/components/OscillatingCircle';
+import Callouts from '@/components/Callouts';
 
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -55,7 +56,17 @@ export default function Home() {
   return (
     <>
         <HeroText text={'Hohman Digital'}/>
+        <div style={{height: '500px'}}></div>
+        <Callouts />
         <div className='animated-nav' ref={navRef}>
+          <div className='shadowBox shadowBox-top-left' />
+          <div className='shadowBox shadowBox-top-right' />
+          <div className='shadowBox shadowBox-bottom-left' />
+          <div className='shadowBox shadowBox-bottom-right' />
+          <div className='shadowBox shadowBox-left-top' />
+          <div className='shadowBox shadowBox-left-bottom' />
+          <div className='shadowBox shadowBox-right-top' />
+          <div className='shadowBox shadowBox-right-bottom' />
           <NavItem
             number={1}
             styles={styles}
@@ -127,75 +138,38 @@ export default function Home() {
 }
 
 const animateNav = (tl, nav, navLinks) => {
-    const borderGirth = getPropertyValue(nav, '--padding');
-    const gridGap     = getPropertyValue(nav, '--gap');
+    const gridGap = getPropertyValue(nav, '--gap');
 
-    const Boxes1 = nav.querySelectorAll('div[data-num="1"]');
-    const Boxes2 = nav.querySelectorAll('div[data-num="2"]');
-    const Boxes3 = nav.querySelectorAll('div[data-num="3"]');
-    const Boxes4 = nav.querySelectorAll('div[data-num="4"]');
+    const topLeft    = nav.querySelector('.shadowBox-top-left');
+    const topRight    = nav.querySelector('.shadowBox-top-right');
+    const rightTop = nav.querySelector('.shadowBox-right-top');
+    const leftTop   = nav.querySelector('.shadowBox-left-top');
+    const rightBottom  = nav.querySelector('.shadowBox-right-bottom');
+    const leftBottom   = nav.querySelector('.shadowBox-left-bottom');
+    const bottomLeft = nav.querySelector('.shadowBox-bottom-left');
+    const bottomRight = nav.querySelector('.shadowBox-bottom-right');
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Each side grows from its own edge ─────────────────────────────────────
+    // Top — grows rightward from left
+    tl.fromTo(topLeft,    { width: '0%', '--progress': '100%' }, { width: '100%', '--progress': '0%', ease: 'none' }, 'top');
+    tl.fromTo(topRight,    { width: '0%','--progress': '100%'  }, { width: '100%', '--progress': '0%', ease: 'none' }, 'top');
 
-    const skip = (el) => el.classList.contains('animated');
+    tl.fromTo(leftTop,   { height: 'calc(0% - var(--br)/2)','--progress': '100%' }, { height: 'calc(100% - var(--br)/2)', '--progress': '20%', ease: 'none' }, 'sides-top');
+    tl.fromTo(rightTop,  { height: 'calc(0% - var(--br)/2)','--progress': '100%' }, { height: 'calc(100% - var(--br)/2)', '--progress': '20%', ease: 'none' }, 'sides-top');
 
-    const growW = (el, label) =>
-        tl.add(gsap.fromTo(el, { width: '0%'  }, { width: '100%',  ease: 'none' }), label);
+    tl.to(leftTop,   { borderRadius: 0, ease: 'none','--progress': '0%', duration:0 }, 'sides-bottom');
+    tl.to(rightTop,  { borderRadius: 0, ease: 'none','--progress': '0%', duration:0 }, 'sides-bottom');
 
-    const growH = (el, label) =>
-        tl.add(gsap.fromTo(el, { height: '0%' }, { height: '100%', ease: 'none' }), label);
+    tl.fromTo(leftBottom,   { height: '0%','--progress': '100%' }, { height: '100%','--progress': '0%', ease: 'none' }, 'sides-bottom');
+    tl.fromTo(rightBottom,  { height: '0%','--progress': '100%' }, { height: '100%','--progress': '0%', ease: 'none' }, 'sides-bottom');
 
-    // ── Outer edges — order matters, draws like a rectangle ──────────────────
+    tl.fromTo(bottomLeft, { width: 'calc(0% - var(--br)/2)','--progress': '100%'  }, { width: 'calc(100% - var(--br)/2)','--progress': '0%',  ease: 'none' }, 'bottom');
+    tl.fromTo(bottomRight, { width: 'calc(0% - var(--br)/2)','--progress': '100%'  }, { width: 'calc(100% - var(--br)/2)','--progress': '0%',  ease: 'none' }, 'bottom');
 
-    // 1. Top bar
-    if (!skip(Boxes1[0])) { Boxes1[0].style.placeSelf = 'start end';   growW(Boxes1[0], 'top'); }
-    if (!skip(Boxes2[0])) { Boxes2[0].style.placeSelf = 'start start'; growW(Boxes2[0], 'top'); }
-
-    // 2. Top sides — grow downward from top corners
-    if (!skip(Boxes1[3])) { Boxes1[3].style.placeSelf = 'start start'; growH(Boxes1[3], 'top-side'); }
-    if (!skip(Boxes2[1])) { Boxes2[1].style.placeSelf = 'start end';   growH(Boxes2[1], 'top-side'); }
-
-    // 3. Bottom sides — grow downward to meet bottom
-    if (!skip(Boxes3[3])) { Boxes3[3].style.placeSelf = 'start start'; growH(Boxes3[3], 'bottom-side'); }
-    if (!skip(Boxes4[1])) { Boxes4[1].style.placeSelf = 'start end';   growH(Boxes4[1], 'bottom-side'); }
-
-    // 4. Bottom bar
-    if (!skip(Boxes3[2])) { Boxes3[2].style.placeSelf = 'end start';   growW(Boxes3[2], 'bottom'); }
-    if (!skip(Boxes4[2])) { Boxes4[2].style.placeSelf = 'end end';     growW(Boxes4[2], 'bottom'); }
-    // ── Inner corners ─────────────────────────────────────────────────────────
-    // Each corner: grows in one axis at 'inner', then fattens to full border at 'gap'
-
-    const innerCornerV = (el, placeSelf) => {
-        if (skip(el)) return;
-        el.style.placeSelf = placeSelf;
-        el.style.width     = borderGirth / 2;
-        tl.add(gsap.fromTo(el, { height: '0%'          }, { height: '100%',     ease: 'none' }), 'inner');
-        tl.add(gsap.fromTo(el, { width: borderGirth / 2 }, { width: borderGirth, ease: 'none' }), 'gap');
-    };
-
-    const innerCornerH = (el, placeSelf) => {
-        if (skip(el)) return;
-        el.style.placeSelf = placeSelf;
-        el.style.height    = borderGirth / 2;
-        tl.add(gsap.fromTo(el, { width: '0%'           }, { width: '100%',       ease: 'none' }), 'inner');
-        tl.add(gsap.fromTo(el, { height: borderGirth / 2 }, { height: borderGirth, ease: 'none' }), 'gap');
-    };
-
-    innerCornerV(Boxes1[1], 'start end');    // Box1 — top-right vertical
-    innerCornerH(Boxes1[2], 'end start');    // Box1 — bottom-left horizontal
-
-    innerCornerV(Boxes2[3], 'start start'); // Box2 — top-left vertical
-    innerCornerH(Boxes2[2], 'end end');     // Box2 — bottom-right horizontal
-
-    innerCornerH(Boxes3[0], 'start start'); // Box3 — top-left horizontal
-    innerCornerV(Boxes3[1], 'end end');     // Box3 — bottom-right vertical
-
-    innerCornerH(Boxes4[0], 'start end');   // Box4 — top-right horizontal
-    innerCornerV(Boxes4[3], 'end start');   // Box4 — bottom-left vertical
-
-    // ── Reveal ────────────────────────────────────────────────────────────────
+    // ── Reveal links ──────────────────────────────────────────────────────────
     tl.add(gsap.to(nav,      { gap: gridGap }),                      'gap');
     tl.add(gsap.to(navLinks, { opacity: 1, pointerEvents: 'auto' }), 'gap');
+    tl.add(gsap.to('.shadowBox', { opacity: 0 }), 'gap');
 
     tl.to({}, { duration: 5 });
 
