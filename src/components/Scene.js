@@ -1,53 +1,49 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { ChevronScene } from '@/components/ChevronScene.js';
-import { CustomEase } from "gsap/CustomEase";
-gsap.registerPlugin(CustomEase);
+import { ChevronScene } from '@/3dcomponents/ChevronScene.js';
+import { Hoop } from '@/3dcomponents/Hoop.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-gsap.registerPlugin(ScrollTrigger);
-import { ChevronContext } from '@/context/ChevronContext';
 
-export default ({ children }) => {
-    const refEl = useRef(null);
-    const [chevronCtx, setChevronCtx] = useState(null);
+gsap.registerPlugin(ScrollTrigger);
+
+const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '100vh', inset = "0px" }) => {
+    const canvasRef   = useRef(null);
+    const [chevron, setChevron] = useState(null);
 
     useEffect(() => {
-        const sceneInstance = new ChevronScene(refEl.current);
-        const c = sceneInstance.addChevron();
+        const sceneInstance = new ChevronScene(canvasRef.current);
+        const c = sceneInstance.addChevron(chevronOpts);
+        setChevron(c);
 
-        setChevronCtx({ chevron: c, scene: sceneInstance });
-
-        const preventScroll = (e) => e.preventDefault();
-        window.addEventListener('wheel',     preventScroll, { passive: false });
-        window.addEventListener('touchmove', preventScroll, { passive: false });
-
-        const heroTl = fireHeroAnimation(c, sceneInstance);
-
-        heroTl.then(() => {
-            leaveHeroAnimation(c, sceneInstance, heroTl);
-            window.removeEventListener('wheel',     preventScroll);
-            window.removeEventListener('touchmove', preventScroll);
-        });
+        onReady?.({ chevron: c, scene: sceneInstance });
 
         return () => {
             sceneInstance.destroy();
             ScrollTrigger.getAll().forEach(t => t.kill());
-            window.removeEventListener('wheel',     preventScroll);
-            window.removeEventListener('touchmove', preventScroll);
         };
     }, []);
 
     return (
-        <ChevronContext.Provider value={chevronCtx}>
-            <div ref={refEl} className='scene-wrapper' style={{ zIndex: '0', position: 'fixed', inset: '0 0 0 0' }} />
-            <ChevronDevBox chevron={chevronCtx?.chevron} />
-            {children}
-        </ChevronContext.Provider>
+        <div
+            ref={canvasRef}
+            className='scene-wrapper'
+            style={{ zIndex: 0, position: 'absolute', pointerEvents: 'none', 
+                width, height, inset,
+            }}
+        >
+            {debug && (<ChevronDevBox chevron={chevron} />)}
+        </div>
     );
 }
 
-function fireHeroAnimation(chevron, scene) {
+export default Scene;
+
+export function fireHeroAnimation(chevron, scene) {
+    const preventScroll = (e) => e.preventDefault();
+    window.addEventListener('wheel',     preventScroll, { passive: false });
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+
     const container = document.querySelector('.Hero');
     const text      = container.querySelector('.text');
     const ball      = container.querySelector('.ball');
@@ -57,8 +53,14 @@ function fireHeroAnimation(chevron, scene) {
     const magicNum1 = 0.75;
     const magicNum2 = 2;
     const magicNum3 = 10;
+    const gapBetweenCnB = -20
 
     const targetZ = chevron.getZForPixelHeight(rect.height * magicNum1);
+
+    console.log('targetZ',targetZ);
+    console.log('rect.height', rect.height);
+    console.log('canvas clientHeight', scene.canvasHeight);
+    console.log('canvas clientWidth', scene.canvasWidth);
 
     // World units → pixels at targetZ depth
 
@@ -67,7 +69,7 @@ function fireHeroAnimation(chevron, scene) {
     const destPos = scene.getElementWorldPosition(text, {
         anchor:  'center',
         z:       targetZ,
-        offsetX: -(rect.width / 2) - (chevronWidth / 2) - 10, // 10px gap
+        offsetX: -(rect.width / 2) - (chevronWidth / 2) + gapBetweenCnB,
     });
 
     // Off-screen start — same Y and Z as destination, far right
@@ -86,7 +88,7 @@ function fireHeroAnimation(chevron, scene) {
     );
     const targetOffset = currentOffset + rect.height * magicNum1; // match chevron height in px
     const offsetPct = ((targetOffset / rect.width) * 100).toFixed(3);
-    console.log('offsetPct',offsetPct);
+    // console.log('offsetPct',offsetPct);
 
     // ── Timeline ─────────────────────────────────────────────────────────────
     const tl = gsap.timeline();
@@ -125,7 +127,7 @@ function fireHeroAnimation(chevron, scene) {
         }, 0.7)
         
         .to(chevron.root.rotation, {
-            y: D2R(180),
+            y: D2R(190),
             duration: 0.7,
             ease: 'none',
         }, 0)
@@ -152,7 +154,8 @@ function fireHeroAnimation(chevron, scene) {
         }, 1.4)
 
         .to(chevron.root.rotation, {
-            x: D2R(180),
+            y: D2R(180),
+            x: D2R(0),
             duration: 1.4,
             ease: 'power3.out',
         }, 1.4)
@@ -169,65 +172,220 @@ function fireHeroAnimation(chevron, scene) {
         // tl.then(()=>{const unlock = chevron.lockToCurrentPosition();})
         tl.duration(1.5);
 
+
+    const leaveTl = gsap.timeline({
+        scrollTrigger: {
+            trigger: 'body',
+            start:   'top top',
+            end:     'center top',
+            scrub:   1,
+            markers: true,
+        }
+    })
+    .fromTo(chevron.root.rotation,
+        { x: D2R(180) },
+        { x: D2R(260), ease: 'none', duration: 1 }
+    );
+
+    tl.then(()=>{
+        window.removeEventListener('wheel',     preventScroll);
+        window.removeEventListener('touchmove', preventScroll);
+    });
+}
+
+export function calloutAnimation(chevron, scene) {
+    const canvas = scene.renderer.domElement;
+
+    const hoop = scene.addHoop('ring', { radiusPx: 80, tubePx: 4, z: 0 });
+    hoop.setPosition(0, 0, 0);
+
+    const DIRECTION = 'left'; // swap to 'top', 'bottom', 'right' to test other axes
+
+    gsap.set(chevron.root.position, hoop.getEntryWorldPosition(DIRECTION, 15));
+    hoop.enableCanvasClip(canvas, DIRECTION);
+
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
+
+    tl.to(chevron.root.position, {
+        ...hoop.getHoopWorldPosition(),
+        duration: 0.8,
+        ease: 'power2.in',
+    });
+
+    tl.to(chevron.root.position, {
+        ...hoop.getExitWorldPosition(DIRECTION, 15),
+        duration: 0.8,
+        ease: 'power2.out',
+        onStart: () => hoop.disableCanvasClip(),
+    });
+
+    tl.call(() => {
+        gsap.set(chevron.root.position, hoop.getEntryWorldPosition(DIRECTION, 15));
+        hoop.enableCanvasClip(canvas, DIRECTION);
+    });
+
     return tl;
 }
+// export function calloutAnimation(chevron, scene, containerRef) {
+//     const wrapper = containerRef.current.querySelector('.callout_wrapper');
 
-function leaveHeroAnimation(chevron, scene, heroTl) {
-    const leaveTl = buildLeaveTimeline(chevron, scene);
+//     const circle_outline = wrapper.querySelector('.circle-outline');
+//     const circle_color   = wrapper.querySelector('.circle-color');
+//     const copy           = wrapper.querySelector('.copy-wrapper');
+//     const heading        = circle_color.querySelector('h2');
 
-    // Pause it — ScrollTrigger scrub will drive it
-    leaveTl.duration(0.5).pause();
+//     if (!heading) return;
 
-    ScrollTrigger.create({
-        trigger:   'body',
-        start:     'top top',
-        end:       'top+=100 top',
-        scrub:     false,
-        // snap: true,
-        markers:true,
-        onEnter: () => leaveTl.play(),      // Plays when scrolling down past start
-        onLeaveBack: () => leaveTl.reverse(),
-    });
-}
+//     const circle_rect = circle_outline.getBoundingClientRect();
+//     const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.50);
 
-function buildLeaveTimeline(chevron, scene) {
-    const targetPos = scene.getElementWorldPosition('.arrow-down', {
-        anchor: 'center',
-        z:      -100,
-    });
+//     const targetPos_start = scene.getElementWorldPosition(circle_outline, {
+//         anchor: 'center',
+//         z: targetZ,
+//     });
+//     const targetPos_end = scene.getElementWorldPosition(circle_color, {
+//         anchor: 'right',
+//         z: targetZ,
+//     });
 
-    return gsap.timeline()
-        .to(chevron.root.rotation, {
-            x:  D2R(140),
-            y:  D2R(140),
-            ease: 'power1.out', //how to make this yoyo? start and stop at original values
-            duration: 0.5,
-        },0 )
-        .to(chevron.root.position, {
-            x:        targetPos.x,
-            duration: 1,
-            ease:     'expo.In(5)',
-        }, 0.25 )
-        .to(chevron.root.position, {
-            y:        targetPos.y,
-            z:        targetPos.z,
-            duration: 1,
-            ease:     'none',
-        }, 0.25 )
-        .to(chevron.root.rotation, {
-            x:  D2R(180),
-            y:  D2R(0),
-            z:        D2R(0),
-            duration: 1,
-            ease:     'power1.out',
-        }, 0.5);
-}
+//     // ── DOM initial state ────────────────────────────────────────────────────
 
+//     gsap.set(circle_color, {
+//         x: -(circle_rect.width),
+//         '--bg': 'transparent',
+//         clipPath: `inset(0px -${circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+//     });
+//     gsap.set(heading, { x: -(heading.offsetWidth) });
+
+//     // ── Hoop ─────────────────────────────────────────────────────────────────
+
+//     // Size is derived from the DOM element — no need for the initial radiusPx guess.
+//     const hoop = scene.addHoop('ring', {
+//         z:          targetZ,
+//         tubePx:     2,
+//         stencilRef: 1,
+//     });
+
+//     // setSize fits to the element's bounding box (tighter axis → always circular)
+//     hoop.setSize(circle_rect.width, circle_rect.height);
+//     hoop.setPosition(targetPos_start.x, targetPos_start.y, targetPos_start.z);
+
+//     // ── Chevron initial position ──────────────────────────────────────────────
+
+//     // Convert the hoop's world-space radius to a usable X offset so the chevron
+//     // starts one full diameter to the LEFT of the hoop center, at the same depth.
+//     // _pxToWorld is internal — derive the offset from the positions we already have,
+//     // or use getElementWorldPosition on the left edge of circle_outline:
+//     const hoopLeftEdge = scene.getElementWorldPosition(circle_outline, {
+//         anchor: 'center-left',   // left mid-point of the element
+//         z: targetZ,
+//     });
+
+//     // Start: left of ring, same Z as hoop (behind it by one hoop depth feels natural)
+//     // We push Z back slightly so the chevron is behind the stencil disc plane.
+//     const behindZ = targetZ - 1;
+
+//     gsap.set(chevron.root.position, {
+//         x: hoopLeftEdge.x,
+//         y: targetPos_start.y,
+//         z: behindZ,
+//     });
+
+//     // ── Portal + clip ─────────────────────────────────────────────────────────
+
+//     hoop.enablePortal();
+//     hoop.clipChevron(chevron);
+
+//     // ── Timeline ──────────────────────────────────────────────────────────────
+
+//     const tl = gsap.timeline();
+
+//     // Phase 1 — Chevron travels from left of hoop to center, still behind the plane.
+//     // Only the part inside the disc is visible (portal clip active).
+//     tl.to(chevron.root.position, {
+//         x: targetPos_start.x,
+//         z: behindZ,           // still behind — don't cross the plane yet
+//         duration: 0.6,
+//         ease: 'power2.in',
+//     });
+
+//     // Phase 2 — Burst through: push the chevron forward past the hoop's Z plane.
+//     // Release the clip at the exact moment it crosses so it renders fully from here on.
+//     tl.to(chevron.root.position, {
+//         z: targetZ + 1,       // just past the ring
+//         duration: 0.35,
+//         ease: 'power3.out',
+//         onStart: () => hoop.releaseChevron(chevron),
+//     });
+
+//     // Phase 3 — Continue to final position (right edge of circle_color).
+//     tl.to(chevron.root.position, {
+//         x: targetPos_end.x,
+//         y: targetPos_end.y,
+//         z: targetPos_end.z,
+//         duration: 0.5,
+//         ease: 'power2.inOut',
+//     });
+    
+
+//         // gsap.set(chevron.root.position, {
+//         //     x: targetPos_start.x,
+//         //     y: targetPos_start.y,
+//         //     z: targetPos_start.z,
+//         //     duration: 1,
+//         //     ease: 'none',
+//         // }, 0)
+
+//         // gsap.set(chevron.root.rotation, {
+//         //     z: D2R(-90),
+//         //     duration: 1,
+//         //     ease: 'none',
+//         // }, 0)
+
+//         // const wrapper_tl = gsap.timeline({
+//         //     scrollTrigger: {
+//         //         trigger: wrapper,
+//         //         start: `top-=${circle_rect.height} center`, // Starts when wrapper is near bottom
+//         //         end: "bottom center",   // Ends when wrapper is near top
+//         //         scrub: true,         // Smooth 1-second catch-up
+//         //         pin: false,
+//         //         markers:false,
+//         //     }
+//         // })
+
+//         // .to(chevron.root.position, {
+//         //     x: targetPos_end.x,
+//         //     duration: 1,
+//         //     ease: 'power1.inOut',
+//         // }, 0)
+
+//         // .to(circle_color,{ 
+//         //     x: -circle_final_stop, 
+//         //     '--bg': circle_bg_color, 
+//         //     duration: 0.25,
+//         //     ease: "power4.in"
+//         // }, 0.25)
+
+//         // .to(heading, {
+//         //     x: circle_final_stop,
+//         //     duration: 0.5,
+//         // }, 0.5)
+
+//         // .fromTo(copy,{
+//         //     opacity: 0,
+//         //     y:-20,
+//         // }, {
+//         //     opacity: 1,
+//         //     y:0,
+//         //     duration: 1,
+//         // }, 1)
+// }
+
+// Helpers
 
 const D2R = (d) => THREE.MathUtils.degToRad(d);
 
-
-function ChevronDevBox({ chevron }) {
+function ChevronDevBox({ chevron, inset = "50px 10px 0 0" }) {
     const [pos, setPos]     = useState({ x: 0, y: 0, z: 0 });
     const [rot, setRot]     = useState({ x: 0, y: 0, z: 0 });
     const [arm, setArm]     = useState(45);
@@ -276,7 +434,7 @@ function ChevronDevBox({ chevron }) {
     });
     const numStyle = {
         background: '#1a1d28', border: '1px solid #2a2d38', borderRadius: '3px',
-        color: '#c8ccd8', fontFamily: 'monospace', fontSize: '10px',
+        color: '#c8ccd8', fontFamily: 'monospace', fontSize: '14px',
         padding: '2px 4px', width: '100%', textAlign: 'right',
     };
     const sectionStyle = {
@@ -308,7 +466,7 @@ function ChevronDevBox({ chevron }) {
 
     return (
         <div style={{
-            position: 'fixed', bottom: '50px', left: '16px',
+            position: 'fixed', inset, width: '250px', height: 'fit-content',
             background: '#0d0f14', border: '1px solid #2a2d38',
             borderRadius: '6px', fontFamily: 'monospace', fontSize: '11px',
             color: '#c8ccd8', zIndex: 9999, width: '280px',

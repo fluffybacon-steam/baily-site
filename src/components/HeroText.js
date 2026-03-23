@@ -8,13 +8,17 @@ import ScrollTrigger from "gsap/dist/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 // import styles from '../src/styles/hero.module.scss';
-import Logo from './Logo';
+// import Logo from './Logo';
+import Scene, { fireHeroAnimation } from '@/components/Scene.js';
 
 const HeroText = ({ text }) => {
   const titleWrapRef = useRef(null);
   const svgRef = useRef(null);
   const headlineRef = useRef(null);
   const arrowDownRef = useRef(null);
+
+  const chevronRef = useRef(null);
+  const sceneRef   = useRef(null);
 //   const textTop = text || 'Hohman Digital';
 
   useGSAP(() => {
@@ -37,7 +41,10 @@ const HeroText = ({ text }) => {
   }, { scope: svgRef, dependencies: [text] });
 
   return (
-    <>
+    <div className="hero-wrapper" style={{position: 'relative', overflow: 'visible'}}>
+        <Scene inset="-50% 0 0 0" onReady={({ chevron, scene }) => {
+            fireHeroAnimation(chevron, scene);
+        }} />
         <div ref={titleWrapRef} className={'Hero'}>
             <h1 className="text"><span>hohman</span><span>digital</span></h1>
             <div className='ball'></div>
@@ -56,7 +63,7 @@ const HeroText = ({ text }) => {
             experiences
         </div>
         <div ref={arrowDownRef} className='arrow-down'></div>
-    </>
+    </div>
   );
 };
 

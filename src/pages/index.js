@@ -12,7 +12,7 @@ import SplitText from "@/components/SplitText";
 import OscillatingCircle from '@/components/OscillatingCircle';
 import Callouts from '@/components/Callouts';
 
-import {gsap} from 'gsap';
+import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
@@ -55,8 +55,8 @@ export default function Home() {
 
   return (
     <>
-        <HeroText text={'Hohman Digital'}/>
-        <div style={{height: '500px'}}></div>
+        {/* <HeroText text={'Hohman Digital'}/> */}
+        {/* <div style={{height: '500px'}}></div> */}
         <Callouts />
         <div className='animated-nav' ref={navRef}>
           <div className='shadowBox shadowBox-top-left' />

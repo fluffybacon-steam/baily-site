@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { Chevron } from '@/components/Chrevon';
+import { Chevron } from '@/3dcomponents/Chrevon.js';
+import { Hoop }    from '@/3dcomponents/Hoop.js';
 
 export class ChevronScene {
     /**
@@ -9,50 +10,51 @@ export class ChevronScene {
      * @param {number}      opts.width
      * @param {number}      opts.height
      */
-    constructor(mountEl, { width = document.documentElement.clientWidth, height = document.documentElement.clientHeight } = {}) {
-        this._chevrons = new Map();
+    constructor(mountEl, { width, height } = {}) {
+        console.log('mountEl', mountEl);
+        const w = width  ?? mountEl.clientWidth;
+        const h = height ?? mountEl.clientHeight;
 
-        // ── Scene ────────────────────────────────────────────────────────────
+        this._chevrons = new Map();
+        this._hoops    = new Map();
+        this._mountEl  = mountEl;
+
         this.scene = new THREE.Scene();
-        // this.scene.background = new THREE.Color('skyblue');
         this.scene.background = null;
 
-        // ── Camera ───────────────────────────────────────────────────────────
-        this.camera = new THREE.PerspectiveCamera(100, width / height, 0.1, 2000);
+        this.camera = new THREE.PerspectiveCamera(100, w / h, 0.1, 2000);
         this.camera.position.set(0, 0, 30);
         this.scene.add(this.camera);
 
-        // ── Lights ───────────────────────────────────────────────────────────
         const light = new THREE.DirectionalLight('white');
         light.position.set(0, 0, 100);
         this.scene.add(light);
 
-        // ── Debug ─────────────────────────────────────────────────────────────
-        this.scene.add(new THREE.AxesHelper(100));
-
-        // ── Renderer ─────────────────────────────────────────────────────────
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        // stencil: true is Three.js's default but we make it explicit because
+        // Hoop's portal mode depends on it being present in the framebuffer.
+        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, stencil: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(width, height);
+        this.renderer.setSize(w, h);
         mountEl.appendChild(this.renderer.domElement);
 
-        // ── GSAP ticker — single render loop, no THREE clock needed ──────────
-        // Bind so we can cleanly remove it in destroy()
         this._renderFn = () => this.renderer.render(this.scene, this.camera);
         gsap.ticker.add(this._renderFn);
-
-        // Opt out of GSAP's lagSmoothing so fast tabs don't get a
-        // giant delta spike when they become active again
         gsap.ticker.lagSmoothing(0);
 
-        // ── Expose for devtools / SceneControls panel ─────────────────────────
+        // Auto-resize when mountEl changes size
+        this._resizeObserver = new ResizeObserver(() => {
+            const w = mountEl.clientWidth;
+            const h = mountEl.clientHeight;
+            this.setSize(w, h);
+        });
+        this._resizeObserver.observe(mountEl);
+
         window.scene         = this.scene;
         window.sceneCamera   = this.camera;
         window.sceneRenderer = this.renderer;
-
     }
 
-    // ── Chevron registry ─────────────────────────────────────────────────────
+    // ── Chevron registry ──────────────────────────────────────────────────────
 
     /**
      * @param {string} id
@@ -60,7 +62,7 @@ export class ChevronScene {
      * @returns {Chevron}
      */
     addChevron(id, opts = {}) {
-        const chevron = new Chevron({ camera: this.camera, ...opts });
+        const chevron = new Chevron({ camera: this.camera, mountEl: this._mountEl, ...opts });
         this._chevrons.set(id, chevron);
         this.scene.add(chevron.root);
         return chevron;
@@ -76,6 +78,79 @@ export class ChevronScene {
         this._chevrons.delete(id);
     }
 
+    // ── Hoop registry ─────────────────────────────────────────────────────────
+
+    /**
+     * Add a circular hoop to the scene.
+     *
+     * The hoop can be used in two ways:
+     *
+     *   1. "Jump-through" — a Chevron flies through the ring. No special setup
+     *      needed; just position the hoop and animate the Chevron past its Z.
+     *
+     *   2. "Portal emergence" — a Chevron appears to come out of the hole.
+     *      Call hoop.enablePortal() then hoop.clipChevron(chevron). The stencil
+     *      buffer restricts the Chevron's pixels to the disc area while the ring
+     *      itself is always fully visible.
+     *
+     * Pixel sizing
+     * ─────────────
+     * Pass radiusPx / tubePx in canvas-pixel units and the Hoop converts them
+     * to world space automatically using the shared camera + mountEl.
+     * After construction you can also call:
+     *
+     *   hoop.setSize(widthPx, heightPx)   — fit to element dimensions
+     *   hoop.setRadiusPx(px)              — set by explicit radius
+     *   hoop.setDepth(z)                  — change Z and recalculate
+     *
+     * Multiple portals
+     * ─────────────────
+     * Each hoop uses a unique stencilRef (1-255). If you add more than one
+     * portal hoop, pass distinct stencilRef values to avoid overlap:
+     *
+     *   scene.addHoop('a', { stencilRef: 1, ... })
+     *   scene.addHoop('b', { stencilRef: 2, ... })
+     *
+     * @param {string} id
+     * @param {object} opts  forwarded to Hoop constructor
+     * @returns {Hoop}
+     *
+     * @example — basic hoop
+     * const hoop = scene.addHoop('ring1', { radiusPx: 120, z: 0 });
+     * hoop.alignToElement('#target');
+     *
+     * @example — portal emergence
+     * const hoop = scene.addHoop('portal', { radiusPx: 160, z: 0, stencilRef: 1 });
+     * const chevron = scene.addChevron('hero', { angle: 0 });
+     * hoop.enablePortal();
+     * hoop.clipChevron(chevron);
+     * chevron.root.position.set(0, 0, -10);   // start behind the portal
+     * gsap.to(chevron.root.position, { z: 10, duration: 1.5, ease: 'power2.out',
+     *     onComplete: () => hoop.releaseChevron(chevron),
+     * });
+     */
+    addHoop(id, opts = {}) {
+        const hoop = new Hoop({ camera: this.camera, mountEl: this._mountEl, ...opts });
+        this._hoops.set(id, hoop);
+        this.scene.add(hoop.root);
+        return hoop;
+    }
+
+    /** @returns {Hoop|null} */
+    getHoop(id) { return this._hoops.get(id) ?? null; }
+
+    /**
+     * Dispose and remove a hoop from the scene.
+     * Also releases any chevrons that were portal-clipped to it.
+     */
+    removeHoop(id) {
+        const hoop = this._hoops.get(id);
+        if (!hoop) return;
+        hoop.dispose();
+        this.scene.remove(hoop.root);
+        this._hoops.delete(id);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     setBackground(color) {
@@ -88,7 +163,10 @@ export class ChevronScene {
         this.renderer.setSize(width, height);
     }
 
-    // ── Coordinate utilities ─────────────────────────────────────────────────
+    get canvasWidth()  { return this._mountEl.clientWidth;  }
+    get canvasHeight() { return this._mountEl.clientHeight; }
+
+    // ── Coordinate utilities ──────────────────────────────────────────────────
 
     /**
      * Resolve a DOM element's position to world-space coordinates.
@@ -101,10 +179,6 @@ export class ChevronScene {
      * @param {string|number} [opts.offsetX=0]   px number or '50%' of element width
      * @param {string|number} [opts.offsetY=0]   px number or '50%' of element height
      * @returns {{ x: number, y: number, z: number } | null}
-     *
-     * Usage:
-     *   const pos = sceneInstance.getElementWorldPosition('.Hero', { z: targetZ });
-     *   tl.to(chevron.root.position, { ...pos, duration: 1 });
      */
     getElementWorldPosition(target, { anchor = 'center', z = 0, offsetX = 0, offsetY = 0 } = {}) {
         const el = typeof target === 'string' ? document.querySelector(target) : target;
@@ -116,39 +190,36 @@ export class ChevronScene {
         this.camera.updateMatrixWorld();
         this.camera.updateProjectionMatrix();
 
+        const mountRect       = this._mountEl.getBoundingClientRect();
         const rect            = el.getBoundingClientRect();
         const resolvedOffsetX = _resolveOffset(offsetX, rect.width);
         const resolvedOffsetY = _resolveOffset(offsetY, rect.height);
-        const pixelX          = _anchorPixelX(rect, anchor) + resolvedOffsetX;
-        const pixelY          = _anchorPixelY(rect, anchor) + resolvedOffsetY;
-        const ndcX            =  (pixelX / document.documentElement.clientWidth)  * 2 - 1;
-        const ndcY            = -(pixelY / document.documentElement.clientHeight) * 2 + 1;
+
+        const pixelX = _anchorPixelX(rect, anchor) + resolvedOffsetX - mountRect.left;
+        const pixelY = _anchorPixelY(rect, anchor) + resolvedOffsetY - mountRect.top;
+
+        const ndcX =  (pixelX / mountRect.width)  * 2 - 1;
+        const ndcY = -(pixelY / mountRect.height) * 2 + 1;
 
         return _ndcToWorld(ndcX, ndcY, z, this.camera);
     }
 
-    // ── Debug ────────────────────────────────────────────────────────────────
+    // ── Debug ─────────────────────────────────────────────────────────────────
 
     /**
      * Place a magenta crosshair in the scene at the world position that
-     * corresponds to a given pixel coordinate. Use this to verify that
-     * NDC → world unprojection lines up with DOM positions.
+     * corresponds to a given pixel coordinate.
      *
-     * Usage:
-     *   const markers = scene.testPixelToWorld(20, 20)
-     *   // compare the crosshair position against a known DOM element
-     *   scene.clearDebugMarkers(markers) // clean up when done
-     *
-     * @param {number} pixelX   viewport X in pixels (e.g. from getBoundingClientRect)
-     * @param {number} pixelY   viewport Y in pixels
+     * @param {number} pixelX   canvas-relative X in pixels
+     * @param {number} pixelY   canvas-relative Y in pixels
      * @param {number} [z=0]    world-space Z to place the marker at
      * @returns {{ dot, hLine, vLine }}
      */
     testPixelToWorld(pixelX, pixelY, z = 0) {
-        const ndcX =  (pixelX / document.documentElement.clientWidth)  * 2 - 1;
-        const ndcY = -(pixelY / document.documentElement.clientHeight) * 2 + 1;
+        const mountRect = this._mountEl.getBoundingClientRect();
+        const ndcX =  (pixelX / mountRect.width)  * 2 - 1;
+        const ndcY = -(pixelY / mountRect.height) * 2 + 1;
 
-        // Unproject through camera
         const origin    = new THREE.Vector3().setFromMatrixPosition(this.camera.matrixWorld);
         const direction = new THREE.Vector3(ndcX, ndcY, 0.5)
             .unproject(this.camera)
@@ -157,7 +228,7 @@ export class ChevronScene {
         const t     = (z - origin.z) / direction.z;
         const world = origin.clone().addScaledVector(direction, t);
 
-        const MAT = new THREE.MeshBasicMaterial({ color: 0xff00ff, depthTest: false });
+        const MAT      = new THREE.MeshBasicMaterial({ color: 0xff00ff, depthTest: false });
         const LINE_MAT = new THREE.LineBasicMaterial({ color: 0xff00ff, depthTest: false });
 
         const dot = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), MAT);
@@ -200,24 +271,19 @@ export class ChevronScene {
         vLine.geometry.dispose();
     }
 
-        // ── Lifecycle ─────────────────────────────────────────────────────────────
+    // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     destroy() {
-        // 1. Stop rendering
         gsap.ticker.remove(this._renderFn);
+        this._resizeObserver.disconnect();
 
-        // 2. Kill any live tweens on chevron objects
-        for (const chevron of this._chevrons.values()) {
-            chevron.dispose();
-        }
+        for (const chevron of this._chevrons.values()) chevron.dispose();
+        for (const hoop    of this._hoops.values())    hoop.dispose();
 
-        // 3. Free GPU memory
         this.renderer.dispose();
-
-        // 4. Remove canvas (prevents HMR double-mount)
         this.renderer.domElement.remove();
-
         this._chevrons.clear();
+        this._hoops.clear();
     }
 }
 

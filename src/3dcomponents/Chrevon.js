@@ -14,6 +14,7 @@ export class Chevron {
      * @param {string|THREE.Color} opts.color1
      * @param {string|THREE.Color} opts.color2
      * @param {THREE.Camera}       opts.camera      required for alignToElement
+     * @param {HTMLElement}        opts.mountEl     canvas container — required for correct NDC mapping
      */
     constructor({
         height   = 15,
@@ -22,18 +23,18 @@ export class Chevron {
         minAngle = 0,
         maxAngle = 90,
         camera   = null,
+        mountEl  = null,
     } = {}) {
-        this.c_height = height; 
+        this.c_height = height;
         this.c_radius = radius;
 
         this.minAngle = minAngle;
         this.maxAngle = maxAngle;
         this.camera   = camera;
+        this._mountEl = mountEl;
 
         // ── Geometry ─────────────────────────────────────────────────────────
         const geo = new THREE.CapsuleGeometry(radius, height, 10, 20);
-        // this.material1 = new THREE.MeshBasicMaterial({ color: new THREE.Color(color1) });
-        // this.material2 = new THREE.MeshBasicMaterial({ color: new THREE.Color(color2) });
         this.material1 = new THREE.MeshBasicMaterial({ map: createGradientTexture('#00aeef', '#2d388a') });
         this.material2 = new THREE.MeshBasicMaterial({ map: createGradientTexture('#00aeef', '#2d388a') });
 
@@ -59,16 +60,11 @@ export class Chevron {
     }
 
     // ── Convenience animation methods ────────────────────────────────────────
-    // Each method returns a GSAP tween so it can be used standalone OR
-    // dropped into a timeline with .add() / .to() / position offsets.
-    //
-    // Usage standalone:      chevron.open({ ease: 'elastic.out', duration: 1 })
-    // Usage in a timeline:   tl.add(chevron.open({ duration: 0.6 }), '>')
 
     /**
      * Animate arms to maxAngle.
-     * @param {gsap.TweenVars} [vars]  any GSAP tween vars (duration, ease, delay, onComplete…)
-     * @returns {gsap.core.Tween}
+     * @param {gsap.TweenVars} [vars]
+     * @returns {gsap.core.Timeline}
      */
     open(vars = {}) {
         return this._animateAngle(this.maxAngle, vars);
@@ -77,7 +73,7 @@ export class Chevron {
     /**
      * Animate arms to minAngle.
      * @param {gsap.TweenVars} [vars]
-     * @returns {gsap.core.Tween}
+     * @returns {gsap.core.Timeline}
      */
     close(vars = {}) {
         return this._animateAngle(this.minAngle, vars);
@@ -87,7 +83,7 @@ export class Chevron {
      * Animate arms to an arbitrary angle (degrees).
      * @param {number}         deg
      * @param {gsap.TweenVars} [vars]
-     * @returns {gsap.core.Tween}
+     * @returns {gsap.core.Timeline}
      */
     setAngle(deg, vars = {}) {
         const clamped = Math.max(this.minAngle, Math.min(this.maxAngle, deg));
@@ -102,54 +98,17 @@ export class Chevron {
 
     /**
      * Animate the whole chevron's world position.
-     * When Z changes, the model tilts in the direction of travel and returns
-     * to neutral by the time it arrives — like a plane pitching on takeoff.
-     *
      * @param {number}         x
      * @param {number}         y
      * @param {number}         z
-     * @param {object}         [vars]            any GSAP tween vars, plus:
-     * @param {number}         [vars.tiltAngle=25]   peak tilt in degrees
-     * @param {string}         [vars.tiltAxis='x']   rotation axis for the tilt ('x'|'y')
-     * @param {string}         [vars.tiltEase='sine.inOut']
+     * @param {gsap.TweenVars} [vars]
      * @returns {gsap.core.Timeline}
      */
     moveTo(x, y, z, vars = {}) {
-        const {
-            tiltAngle = 25,
-            tiltAxis  = 'x',
-            tiltEase  = 'sine.inOut',
-            ...tweenVars
-        } = vars;
- 
-        const duration = tweenVars.duration ?? 1;
-        const deltaZ   = z - this.root.position.z;
-        const tl       = gsap.timeline();
- 
-        // Always tween position
-        tl.to(this.root.position, { x, y, z, ...tweenVars }, 0);
- 
-        // Only add tilt if Z is actually changing
-        // if (Math.abs(deltaZ) > 0.001) {
-        //     // Tilt toward destination: positive deltaZ (toward camera) pitches forward (negative X)
-        //     const peakRad = D2R(-Math.sign(deltaZ) * tiltAngle);
-        //     const half    = duration / 2;
- 
-        //     tl.to(this.root.rotation, {
-        //             [tiltAxis]: peakRad,
-        //             duration:   half,
-        //             ease:       tiltEase,
-        //         }, 0)
-        //       .to(this.root.rotation, {
-        //             [tiltAxis]: 0,
-        //             duration:   half,
-        //             ease:       tiltEase,
-        //         }, half);
-        // }
- 
+        const tl = gsap.timeline();
+        tl.to(this.root.position, { x, y, z, ...vars }, 0);
         return tl;
     }
- 
 
     /**
      * Animate the whole chevron's rotation (degrees).
@@ -175,7 +134,7 @@ export class Chevron {
             _resolve(z, this.root.position.z),
         );
     }
- 
+
     setRotation(x, y, z) {
         this.root.rotation.set(
             D2R(_resolve(x, THREE.MathUtils.radToDeg(this.root.rotation.x))),
@@ -191,18 +150,12 @@ export class Chevron {
     }
 
     // ── DOM alignment ─────────────────────────────────────────────────────────
-     /**
-     * Locks the chevron to its current apparent screen position so it scrolls
-     * with the page like a normal DOM element — without being tied to a specific
-     * element. Snapshots the current viewport position, converts to document
-     * space, then recomputes world coords on every scroll event.
+
+    /**
+     * Locks the chevron's Y position to its current apparent screen position
+     * so it "hangs back" as the user scrolls. X and Z remain free to tween.
      *
      * @returns {Function} unlock — call to remove the scroll listener
-     *
-     * Usage:
-     *   const unlock = chevron.lockToCurrentPosition();
-     *   // later:
-     *   unlock();
      */
     lockToCurrentPosition() {
         const cam = this.camera;
@@ -210,25 +163,29 @@ export class Chevron {
             console.warn('Chevron.lockToCurrentPosition: no camera provided.');
             return () => {};
         }
- 
+
         cam.updateMatrixWorld();
         cam.updateProjectionMatrix();
- 
-        // Project current world position → viewport pixels
-        const projected = this.root.position.clone().project(cam);
-        const vpY = (-projected.y + 1) / 2 * window.innerHeight;
 
-        // Convert viewport px → document px (scroll-invariant) — Y only
+        const mountRect  = this._mountEl?.getBoundingClientRect();
+        const canvasH    = mountRect?.height ?? window.innerHeight;
+
+        // Project current world position → canvas-relative pixels
+        const projected  = this.root.position.clone().project(cam);
+        const vpY        = (-projected.y + 1) / 2 * canvasH;
+
+        // Convert canvas px → document px (scroll-invariant) — Y only
         const docY   = vpY + window.scrollY;
         const worldZ = this.root.position.z;
 
         const update = () => {
-            const currentVpY = docY - window.scrollY;
-            const ndcY = -(currentVpY / window.innerHeight) * 2 + 1;
+            const currentCanvasH = this._mountEl?.getBoundingClientRect().height ?? window.innerHeight;
+            const currentVpY     = docY - window.scrollY;
+            const ndcY           = -(currentVpY / currentCanvasH) * 2 + 1;
 
             cam.updateMatrixWorld();
             const world = _ndcToWorld(0, ndcY, worldZ, cam);
-            this.root.position.y = world.y;  // Y only — X and Z remain free
+            this.root.position.y = world.y; // Y only — X and Z remain free
         };
 
         window.addEventListener('scroll', update, { passive: true });
@@ -236,7 +193,7 @@ export class Chevron {
         this._unlockScroll = () => window.removeEventListener('scroll', update);
         return this._unlockScroll;
     }
- 
+
     /**
      * Remove an active scroll lock if one exists.
      */
@@ -246,43 +203,34 @@ export class Chevron {
     }
 
     /**
-     * @param {number} pixelHeight 
-     * @returns {z} z value to scale chrevon to appropiate height
+     * Calculate the Z depth at which the chevron will appear a given pixel height.
+     * @param {number} pixelHeight
+     * @param {number} [canvasHeight]  defaults to mountEl height, then window.innerHeight
+     * @returns {number} z
      */
-    getZForPixelHeight(pixelHeight) {
-        console.log(this);
-        const cam           = this.camera;
+    getZForPixelHeight(pixelHeight, canvasHeight) {
+        const cam = this.camera;
+        const h   = canvasHeight ?? this._mountEl?.clientHeight ?? window.innerHeight;
+        console.log('getZForPixelHeight — mountEl:', this._mountEl, 'h used:', h, 'pixelHeight:', pixelHeight);
         const chevronHeight = this.c_height + this.c_radius * 2;
         const fovRad        = THREE.MathUtils.degToRad(cam.fov);
         const visibleAtZ0   = 2 * Math.tan(fovRad / 2) * cam.position.z;
-        const worldTarget   = (pixelHeight / window.innerHeight) * visibleAtZ0;
+        const worldTarget   = (pixelHeight / h) * visibleAtZ0;
         const result        = cam.position.z - (chevronHeight * cam.position.z) / worldTarget;
-
-        console.table({
-            pixelHeight,
-            chevronHeight,
-            'cam.fov':       cam?.fov,
-            'cam.position.z': cam?.position.z,
-            fovRad,
-            visibleAtZ0,
-            worldTarget,
-            result,
-        });
-
         return result;
     }
-    
+
     /**
      * Align the chevron to a DOM element's position in world space.
      *
      * @param {string|HTMLElement} target
      * @param {object}   [opts]
      * @param {'center'|'top-left'|'top-right'|'bottom-left'|'bottom-right'} [opts.anchor='center']
-     * @param {number}   [opts.z=0]          world-space Z depth
-     * @param {string|number} [opts.offsetX=0]  horizontal offset — px number or '50%' of element width
-     * @param {string|number} [opts.offsetY=0]  vertical offset   — px number or '50%' of element height
-     * @param {THREE.Camera}  [opts.camera]   override instance camera
-     * @param {gsap.TweenVars} [opts.animate] if provided, animate instead of snap
+     * @param {number}   [opts.z=0]
+     * @param {string|number} [opts.offsetX=0]
+     * @param {string|number} [opts.offsetY=0]
+     * @param {THREE.Camera}  [opts.camera]
+     * @param {gsap.TweenVars} [opts.animate]
      */
     alignToElement(target, { anchor = 'center', z = 0, offsetX = 0, offsetY = 0, camera, animate } = {}) {
         const cam = camera ?? this.camera;
@@ -290,28 +238,34 @@ export class Chevron {
             console.warn('Chevron.alignToElement: no camera provided.');
             return;
         }
- 
+
         const el = typeof target === 'string' ? document.querySelector(target) : target;
         if (!el) {
             console.warn(`Chevron.alignToElement: element not found — "${target}"`);
             return;
         }
- 
+
         cam.updateMatrixWorld();
         cam.updateProjectionMatrix();
- 
-        const rect = el.getBoundingClientRect();
- 
-        // Resolve offsets — accept raw px numbers or percentage strings e.g. '50%'
+
+        const mountRect       = this._mountEl?.getBoundingClientRect();
+        const canvasW         = mountRect?.width  ?? window.innerWidth;
+        const canvasH         = mountRect?.height ?? window.innerHeight;
+        const canvasLeft      = mountRect?.left   ?? 0;
+        const canvasTop       = mountRect?.top    ?? 0;
+
+        const rect            = el.getBoundingClientRect();
         const resolvedOffsetX = _resolveOffset(offsetX, rect.width);
         const resolvedOffsetY = _resolveOffset(offsetY, rect.height);
- 
-        const pixelX = _anchorX(rect, anchor) + resolvedOffsetX;
-        const pixelY = _anchorY(rect, anchor) + resolvedOffsetY;
-        const ndcX   =  (pixelX / window.innerWidth)  * 2 - 1;
-        const ndcY   = -(pixelY / window.innerHeight) * 2 + 1;
-        const world  = _ndcToWorld(ndcX, ndcY, z, cam);
- 
+
+        // Pixel position relative to the canvas
+        const pixelX = _anchorX(rect, anchor) + resolvedOffsetX - canvasLeft;
+        const pixelY = _anchorY(rect, anchor) + resolvedOffsetY - canvasTop;
+
+        const ndcX =  (pixelX / canvasW) * 2 - 1;
+        const ndcY = -(pixelY / canvasH) * 2 + 1;
+        const world = _ndcToWorld(ndcX, ndcY, z, cam);
+
         if (animate) {
             return this.moveTo(world.x, world.y, world.z, animate);
         }
@@ -329,15 +283,11 @@ export class Chevron {
 
     // ── Internal ─────────────────────────────────────────────────────────────
 
-    /**
-     * Core tween builder — both arms move symmetrically.
-     * Returns a GSAP timeline so both arms animate as one unit.
-     */
     _animateAngle(deg, vars = {}) {
         const rad = D2R(deg);
         const tl  = gsap.timeline();
         tl.to(this.arm1.rotation, { z:  rad, ...vars }, 0)
-          .to(this.arm2.rotation, { z: -rad, ...vars }, 0); // '<' = same time
+          .to(this.arm2.rotation, { z: -rad, ...vars }, 0);
         return tl;
     }
 
@@ -350,11 +300,6 @@ export class Chevron {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Resolve a value against a current value.
- * - String starting with '+' or '-' → relative:  '+10' means current + 10
- * - Plain number or numeric string  → absolute:   10 means exactly 10
- */
 function _resolve(value, current) {
     if (typeof value === 'string' && (value.startsWith('+') || value.startsWith('-'))) {
         return current + parseFloat(value);
@@ -362,11 +307,6 @@ function _resolve(value, current) {
     return parseFloat(value);
 }
 
-/**
- * Resolve an offset value to pixels.
- * Accepts a plain number (px) or a percentage string relative to a reference size.
- * Examples: 10, -20, '50%', '-25%'
- */
 function _resolveOffset(value, referenceSize) {
     if (typeof value === 'string' && value.endsWith('%')) {
         return (parseFloat(value) / 100) * referenceSize;
@@ -413,6 +353,6 @@ function createGradientTexture(colorStart, colorEnd) {
     ctx.fillRect(0, 0, 2, 512);
 
     const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace; // ← this
+    texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
 }

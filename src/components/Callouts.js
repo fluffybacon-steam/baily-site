@@ -1,123 +1,21 @@
 import { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useChevron } from '@/context/ChevronContext';
+import Scene, { calloutAnimation } from '@/components/Scene';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default () => {
     const containerRef = useRef(null);
-    const { chevron, scene } = useChevron() ?? {};
 
-    useEffect(() => {
-        if (!chevron || !scene) return;
-
-        // chevron.setRotation(null,null,0);
-
-        const wrappers = containerRef.current.querySelectorAll('.callout_wrapper');
-
-        wrappers.forEach((wrapper) => {
-            const circle_outline = wrapper.querySelector('.circle-outline');
-            const circle_color = wrapper.querySelector('.circle-color');
-            const copy = wrapper.querySelector('.copy-wrapper');
-            const heading = circle_color.querySelector('h2');
-
-            if(!heading) return;
-            console.log("heading",heading);
-            
-            const circle_bg_color = getComputedStyle(wrapper).getPropertyValue('--bg').trim();
-            const circle_rect = circle_outline.getBoundingClientRect();
-
-            const circle_final_stop = 0.5 * circle_rect.width;
-
-            const targetZ = chevron.getZForPixelHeight(circle_rect.height * 0.5);
-            console.log('looky here', targetZ, circle_rect.height);
-            const targetPos = scene.getElementWorldPosition(circle_outline, {
-                anchor: 'center',
-                z: targetZ
-            });
-
-            // Initial state
-            gsap.set(circle_color, {
-                x: -(circle_rect.width),
-                '--bg': "transparent",
-                clipPath:  `inset(0px -${circle_rect.width}px 0% 0% round ${circle_rect.height}px)`
-            });
-
-            gsap.set(heading, {
-                x: -(heading.offsetWidth),
-            });
-
-            console.log("wrapper",wrapper);
-            console.log('offsetParent:', wrapper.offsetParent);
-            // Timeline with Scrub
-            let cachedPos = { x: 0, y: 0 };
-
-            const tl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: wrapper,
-                    start: `top-=${circle_rect.height} center`, // Starts when wrapper is near bottom
-                    end: "bottom center",   // Ends when wrapper is near top
-                    scrub: true,         // Smooth 1-second catch-up
-                    pin: false,
-                    markers:true,
-                    onRefresh: () => {
-                        const pos = scene.getElementWorldPosition(circle_outline, {
-                            anchor: 'center',
-                            z:      targetZ,
-                        });
-                        if (pos) cachedPos = pos;
-                        tl.invalidate(); // tell GSAP to re-read the function values
-                    },
-                }
-            })
-
-
-            //Fly chervon into circle and out
-
-            .to(chevron.root.position, {
-                x:        () => cachedPos.x,
-                y:        () => cachedPos.y,
-                duration: 1,
-                ease: 'none',
-            }, 0)
-
-            // .to(chevron.root.rotation, {
-            //     y: D2R(45),
-            //     duration: 1,
-            //     ease: 'none',
-            // }, 0)
-
-            .to(circle_color,{ 
-                x: -circle_final_stop, 
-                '--bg': circle_bg_color, 
-                duration: 0.8,
-                ease: "power4.in"
-            })
-
-            .to(heading, {
-                x: circle_final_stop,
-                duration: 1,
-            })
-
-            .fromTo(copy,{
-                opacity: 0,
-                y:-20,
-            }, {
-                opacity: 1,
-                y:0,
-                duration: 1,
-            })
-
-        });
-
-        return () => {
-            ScrollTrigger.getAll().forEach(t => t.kill());
-        };
-    }, [chevron, scene]);
+    const chevronRef = useRef(null);
+    const sceneRef   = useRef(null);
 
     return (
-        <div className="callouts_container" ref={containerRef}>
+        <div className="callouts_container" ref={containerRef} style={{position: 'relative', overflow: 'visible'}}>
+            <Scene debug={1} width="100vw" height="100%" onReady={({ chevron, scene })  => {
+                calloutAnimation(chevron, scene, containerRef);
+            }} />
             <div className="callout_wrapper">
                 <div className="circle-outline"></div>
                 <div className="circle-color">

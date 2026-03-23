@@ -2,7 +2,6 @@ import '@/styles/globals.scss';
 import React, { useEffect } from 'react';
 import Menu from '@/components/Menu';
 import Footer from '@/components/Footer';
-import Scene from '@/components/Scene';
 import {gsap} from 'gsap';
 import ScrollSmoother from "gsap/dist/ScrollSmoother";
 gsap.registerPlugin(ScrollSmoother);
@@ -30,9 +29,7 @@ export default function App({ Component, pageProps }) {
         <div id="smooth-content">
           <Menu />
           <main id='page'>
-            <Scene>
               <Component {...pageProps}/>
-            </Scene>
           </main>
           <Footer />
         </div>

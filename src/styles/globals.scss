@@ -197,7 +197,7 @@ a {
 
 main{
   // border:5px solid purple;
-  margin:2rem auto 2rem auto;
+  margin:0 auto;
   max-width:var(--max-width);
 }
 
@@ -216,6 +216,14 @@ main{
   // }
 }
 
+
+
+// .scene-wrapper{
+//   position: 'absolute';
+//   inset: 0;
+//   pointer-events: 'none';
+// }
+
 .debug-target {
   // display: none;
     position: fixed;
@@ -228,6 +236,9 @@ main{
 }
 
 // Hero
+.hero-wrapper{
+  padding:2rem 0;
+}
 .Hero{
   --ball-size: 4cqw;
   display: grid;
