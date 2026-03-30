@@ -31,8 +31,7 @@ const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '10
             style={{ zIndex: 0, position: 'absolute', pointerEvents: 'none', 
                 width, height, inset,
             }}
-        >
-            {debug && (<ChevronDevBox chevron={chevron} />)}
+        >{debug && ( <ChevronDevBox chevron={chevron} />)}
         </div>
     );
 }
@@ -193,193 +192,141 @@ export function fireHeroAnimation(chevron, scene) {
     });
 }
 
-export function calloutAnimation(chevron, scene) {
-    const canvas = scene.renderer.domElement;
+export function calloutAnimation(chevron, scene, containerRef ) {
+    if(!containerRef.current){
+        return
+    }
+    const wrapper = containerRef.current.querySelector('.callout_wrapper');
 
-    const hoop = scene.addHoop('ring', { radiusPx: 80, tubePx: 4, z: 0 });
-    hoop.setPosition(0, 0, 0);
+    const circle_outline = wrapper.querySelector('.circle-outline');
+    const circle_color   = wrapper.querySelector('.circle-color');
+    const copy           = wrapper.querySelector('.copy-wrapper');
+    const heading        = circle_color.querySelector('h2');
 
-    const DIRECTION = 'left'; // swap to 'top', 'bottom', 'right' to test other axes
+    if (!heading) return;
 
-    gsap.set(chevron.root.position, hoop.getEntryWorldPosition(DIRECTION, 15));
-    hoop.enableCanvasClip(canvas, DIRECTION);
+    const circle_rect = circle_outline.getBoundingClientRect();
+    const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.75); // magic number to make it look good, not based on anything specific
 
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
+    const targetPos_start = scene.getElementWorldPosition(circle_outline, {
+        anchor: 'center',
+        z: targetZ,
+    });
 
-    tl.to(chevron.root.position, {
-        ...hoop.getHoopWorldPosition(),
-        duration: 0.8,
+    const targetPos_end = scene.getElementWorldPosition(circle_color, {
+        anchor: 'right',
+        z: targetZ,
+    });
+
+    // ── DOM initial state ────────────────────────────────────────────────────
+
+    gsap.set(circle_color, {
+        x: -(circle_rect.width),
+        '--bg': 'transparent',
+        clipPath: `inset(0px -${circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+    });
+    gsap.set(heading, { x: -(heading.offsetWidth) });
+
+    // ── Scene inital state ─────────────────────────────────────────────────────────────────
+
+    const hoop = scene.addHoop('ring', { radiusPx: 80, tubePx: 4, z: targetZ , color: "black" });
+    hoop.setSize(circle_rect.width, circle_rect.height);
+    hoop.setPosition(targetPos_start.x, targetPos_start.y, targetZ );
+    hoop.enableCanvasClip(scene.renderer.domElement, 'left');
+
+    chevron.setPosition(targetPos_start.x, targetPos_start.y, targetZ);
+    chevron.setRotation(0, 0, -90);
+
+    // hoop.getEntryWorldPosition(DIRECTION, 15)
+    // hoop.enableCanvasClip(canvas, DIRECTION);
+    // hoop.disableCanvasClip(),
+    // hoop.getHoopWorldPosition()
+    const tl = gsap.timeline();
+
+    tl.fromTo(chevron.root.position,{
+        x: targetPos_start.x , 
+        z: targetZ * 2
+    }, {
+        x: targetPos_end.x ,
+        z: targetZ,           
+        duration: 1,
         ease: 'power2.in',
-    });
+    }, 0);
+
+    tl.add(()=>{hoop.disableCanvasClip()}, 0.5);
+
+
+    return;
 
     tl.to(chevron.root.position, {
-        ...hoop.getExitWorldPosition(DIRECTION, 15),
-        duration: 0.8,
-        ease: 'power2.out',
-        onStart: () => hoop.disableCanvasClip(),
+        z: targetZ ,       // just past the ring
+        duration: 0.35,
+        ease: 'power3.out',
+        onStart: () => hoop.releaseChevron(chevron),
     });
 
-    tl.call(() => {
-        gsap.set(chevron.root.position, hoop.getEntryWorldPosition(DIRECTION, 15));
-        hoop.enableCanvasClip(canvas, DIRECTION);
+    // Phase 3 — Continue to final position (right edge of circle_color).
+    tl.to(chevron.root.position, {
+        x: targetPos_end.x,
+        y: targetPos_end.y,
+        z: targetPos_end.z,
+        duration: 0.5,
+        ease: 'power2.inOut',
     });
-
-    return tl;
-}
-// export function calloutAnimation(chevron, scene, containerRef) {
-//     const wrapper = containerRef.current.querySelector('.callout_wrapper');
-
-//     const circle_outline = wrapper.querySelector('.circle-outline');
-//     const circle_color   = wrapper.querySelector('.circle-color');
-//     const copy           = wrapper.querySelector('.copy-wrapper');
-//     const heading        = circle_color.querySelector('h2');
-
-//     if (!heading) return;
-
-//     const circle_rect = circle_outline.getBoundingClientRect();
-//     const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.50);
-
-//     const targetPos_start = scene.getElementWorldPosition(circle_outline, {
-//         anchor: 'center',
-//         z: targetZ,
-//     });
-//     const targetPos_end = scene.getElementWorldPosition(circle_color, {
-//         anchor: 'right',
-//         z: targetZ,
-//     });
-
-//     // ── DOM initial state ────────────────────────────────────────────────────
-
-//     gsap.set(circle_color, {
-//         x: -(circle_rect.width),
-//         '--bg': 'transparent',
-//         clipPath: `inset(0px -${circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
-//     });
-//     gsap.set(heading, { x: -(heading.offsetWidth) });
-
-//     // ── Hoop ─────────────────────────────────────────────────────────────────
-
-//     // Size is derived from the DOM element — no need for the initial radiusPx guess.
-//     const hoop = scene.addHoop('ring', {
-//         z:          targetZ,
-//         tubePx:     2,
-//         stencilRef: 1,
-//     });
-
-//     // setSize fits to the element's bounding box (tighter axis → always circular)
-//     hoop.setSize(circle_rect.width, circle_rect.height);
-//     hoop.setPosition(targetPos_start.x, targetPos_start.y, targetPos_start.z);
-
-//     // ── Chevron initial position ──────────────────────────────────────────────
-
-//     // Convert the hoop's world-space radius to a usable X offset so the chevron
-//     // starts one full diameter to the LEFT of the hoop center, at the same depth.
-//     // _pxToWorld is internal — derive the offset from the positions we already have,
-//     // or use getElementWorldPosition on the left edge of circle_outline:
-//     const hoopLeftEdge = scene.getElementWorldPosition(circle_outline, {
-//         anchor: 'center-left',   // left mid-point of the element
-//         z: targetZ,
-//     });
-
-//     // Start: left of ring, same Z as hoop (behind it by one hoop depth feels natural)
-//     // We push Z back slightly so the chevron is behind the stencil disc plane.
-//     const behindZ = targetZ - 1;
-
-//     gsap.set(chevron.root.position, {
-//         x: hoopLeftEdge.x,
-//         y: targetPos_start.y,
-//         z: behindZ,
-//     });
-
-//     // ── Portal + clip ─────────────────────────────────────────────────────────
-
-//     hoop.enablePortal();
-//     hoop.clipChevron(chevron);
-
-//     // ── Timeline ──────────────────────────────────────────────────────────────
-
-//     const tl = gsap.timeline();
-
-//     // Phase 1 — Chevron travels from left of hoop to center, still behind the plane.
-//     // Only the part inside the disc is visible (portal clip active).
-//     tl.to(chevron.root.position, {
-//         x: targetPos_start.x,
-//         z: behindZ,           // still behind — don't cross the plane yet
-//         duration: 0.6,
-//         ease: 'power2.in',
-//     });
-
-//     // Phase 2 — Burst through: push the chevron forward past the hoop's Z plane.
-//     // Release the clip at the exact moment it crosses so it renders fully from here on.
-//     tl.to(chevron.root.position, {
-//         z: targetZ + 1,       // just past the ring
-//         duration: 0.35,
-//         ease: 'power3.out',
-//         onStart: () => hoop.releaseChevron(chevron),
-//     });
-
-//     // Phase 3 — Continue to final position (right edge of circle_color).
-//     tl.to(chevron.root.position, {
-//         x: targetPos_end.x,
-//         y: targetPos_end.y,
-//         z: targetPos_end.z,
-//         duration: 0.5,
-//         ease: 'power2.inOut',
-//     });
     
 
-//         // gsap.set(chevron.root.position, {
-//         //     x: targetPos_start.x,
-//         //     y: targetPos_start.y,
-//         //     z: targetPos_start.z,
-//         //     duration: 1,
-//         //     ease: 'none',
-//         // }, 0)
+        // gsap.set(chevron.root.position, {
+        //     x: targetPos_start.x,
+        //     y: targetPos_start.y,
+        //     z: targetPos_start.z,
+        //     duration: 1,
+        //     ease: 'none',
+        // }, 0)
 
-//         // gsap.set(chevron.root.rotation, {
-//         //     z: D2R(-90),
-//         //     duration: 1,
-//         //     ease: 'none',
-//         // }, 0)
+        // gsap.set(chevron.root.rotation, {
+        //     z: D2R(-90),
+        //     duration: 1,
+        //     ease: 'none',
+        // }, 0)
 
-//         // const wrapper_tl = gsap.timeline({
-//         //     scrollTrigger: {
-//         //         trigger: wrapper,
-//         //         start: `top-=${circle_rect.height} center`, // Starts when wrapper is near bottom
-//         //         end: "bottom center",   // Ends when wrapper is near top
-//         //         scrub: true,         // Smooth 1-second catch-up
-//         //         pin: false,
-//         //         markers:false,
-//         //     }
-//         // })
+        // const wrapper_tl = gsap.timeline({
+        //     scrollTrigger: {
+        //         trigger: wrapper,
+        //         start: `top-=${circle_rect.height} center`, // Starts when wrapper is near bottom
+        //         end: "bottom center",   // Ends when wrapper is near top
+        //         scrub: true,         // Smooth 1-second catch-up
+        //         pin: false,
+        //         markers:false,
+        //     }
+        // })
 
-//         // .to(chevron.root.position, {
-//         //     x: targetPos_end.x,
-//         //     duration: 1,
-//         //     ease: 'power1.inOut',
-//         // }, 0)
+        // .to(chevron.root.position, {
+        //     x: targetPos_end.x,
+        //     duration: 1,
+        //     ease: 'power1.inOut',
+        // }, 0)
 
-//         // .to(circle_color,{ 
-//         //     x: -circle_final_stop, 
-//         //     '--bg': circle_bg_color, 
-//         //     duration: 0.25,
-//         //     ease: "power4.in"
-//         // }, 0.25)
+        // .to(circle_color,{ 
+        //     x: -circle_final_stop, 
+        //     '--bg': circle_bg_color, 
+        //     duration: 0.25,
+        //     ease: "power4.in"
+        // }, 0.25)
 
-//         // .to(heading, {
-//         //     x: circle_final_stop,
-//         //     duration: 0.5,
-//         // }, 0.5)
+        // .to(heading, {
+        //     x: circle_final_stop,
+        //     duration: 0.5,
+        // }, 0.5)
 
-//         // .fromTo(copy,{
-//         //     opacity: 0,
-//         //     y:-20,
-//         // }, {
-//         //     opacity: 1,
-//         //     y:0,
-//         //     duration: 1,
-//         // }, 1)
-// }
+        // .fromTo(copy,{
+        //     opacity: 0,
+        //     y:-20,
+        // }, {
+        //     opacity: 1,
+        //     y:0,
+        //     duration: 1,
+        // }, 1)
+}
 
 // Helpers
 

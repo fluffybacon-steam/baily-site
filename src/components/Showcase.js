@@ -584,7 +584,7 @@ export default function Showcase() {
                 }
                 </h2>
                 <GetAgencyDisclaimer agency={activeProject.agency} />
-                <div class='brief' dangerouslySetInnerHTML={{ __html: activeProject?.copy}}></div>
+                <div className='brief' dangerouslySetInnerHTML={{ __html: activeProject?.copy}}></div>
             </div>
             )}
 

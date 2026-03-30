@@ -13,7 +13,12 @@ export default () => {
 
     return (
         <div className="callouts_container" ref={containerRef} style={{position: 'relative', overflow: 'visible'}}>
-            <Scene debug={1} width="100vw" height="100%" onReady={({ chevron, scene })  => {
+            <Scene 
+            // debug={1} 
+            width="100vw" 
+            height="125%" 
+            inset="-25% 0 0 0"
+            onReady={({ chevron, scene })  => {
                 calloutAnimation(chevron, scene, containerRef);
             }} />
             <div className="callout_wrapper">

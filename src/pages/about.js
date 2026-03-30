@@ -30,11 +30,11 @@ const AboutUs = () => {
         <article ref={articleRef} className="loading">
             <h1>About Us</h1>
             <hr />
-            <figure class='right'>
+            <figure classNae='right'>
                 <img width="800" height="946" alt='picture of the founder and his dog' src='https://pub-260e094998904f71aded9ac9db8b350c.r2.dev/president%26co.webp' />
                 <figcaption>President of Hohman Digital, Baily Hohman, sitting with his co-president, Buzz Boy</figcaption>
             </figure>
-            <div class='content-block'>
+            <div classNae='content-block'>
                 <h2>Who We Are</h2>
                 <p>
                     Hi! I'm <strong>Baily</strong>, founder and president of <strong>Hohman Digital LLC</strong>. 
@@ -45,18 +45,18 @@ const AboutUs = () => {
                 <p>
                     We specialize in:
                 </p>
-                <ul class='custom-icons'>
-                    <li class='web'>Frontend & Backend Website Development</li>
-                    <li class='data'>Data-driven <abbr title='Pay-Per-Click'>PPC</abbr> campaigns and <abbr title="Search Engine Optimization">SEO </abbr> strategies</li>
-                    <li class='ai'>Emerging <abbr title='Generative Engine Optimization'>GEO</abbr> techniques</li>
-                    <li class='app'>Android & iOS Applications</li>
+                <ul classNae='custom-icons'>
+                    <li classNae='web'>Frontend & Backend Website Development</li>
+                    <li classNae='data'>Data-driven <abbr title='Pay-Per-Click'>PPC</abbr> campaigns and <abbr title="Search Engine Optimization">SEO </abbr> strategies</li>
+                    <li classNae='ai'>Emerging <abbr title='Generative Engine Optimization'>GEO</abbr> techniques</li>
+                    <li classNae='app'>Android & iOS Applications</li>
                 </ul>
                 <p>
                     We're also growing our software development capabilities and are currently training our own AI model.
                     For the larger projects that come my way, I leverage my collaborative network of freelancers to deliver at scale.
                 </p>
             </div>
-            <div class='content-block'>
+            <div classNae='content-block'>
                 <h2>Meet the Founder</h2>
                 <h3>The Curious Coder</h3>
                 <p>

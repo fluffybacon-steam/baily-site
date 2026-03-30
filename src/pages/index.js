@@ -131,7 +131,7 @@ export default function Home() {
             rootMargin="-100px"
             textAlign="center"
           />
-          <div class='debug-target'></div>
+          <div className='debug-target'></div>
         </div>
     </>
   )
