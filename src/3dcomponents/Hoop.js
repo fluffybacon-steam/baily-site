@@ -254,12 +254,27 @@ export class Hoop {
         }
         const ref = this._stencilRef;
         for (const mat of [chevron.material1, chevron.material2]) {
-            mat.stencilWrite = false;
+            mat.stencilWrite = true;               // ← must be true to enable the TEST
             mat.stencilFunc  = THREE.EqualStencilFunc;
             mat.stencilRef   = ref;
+            mat.stencilFail  = THREE.KeepStencilOp;  // don't modify buffer on fail
+            mat.stencilZFail = THREE.KeepStencilOp;  // don't modify buffer on z-fail
+            mat.stencilZPass = THREE.KeepStencilOp;  // don't modify buffer on pass
             mat.needsUpdate  = true;
         }
         this._clippedChevrons.add(chevron);
+    }
+
+    getInnerRadiusPx() {
+        const center = this._projectToCanvas();
+        const innerWorldR = this._pxToWorld(this._radiusPx) - this._pxToWorld(this._tubePx);
+        const pt = new THREE.Vector3(
+            this.root.position.x + innerWorldR,
+            this.root.position.y,
+            this.root.position.z
+        ).project(this.camera);
+        const w = this._mountEl?.getBoundingClientRect().width ?? window.innerWidth;
+        return Math.floor(Math.abs((pt.x + 1) / 2 * w - center.x));
     }
 
     /**
@@ -364,6 +379,30 @@ export class Hoop {
         this._clippedCanvas  = canvas;
         this._clipDirection  = direction;
         this._domRing        = ring;
+
+        return `circle(${innerPx}px at ${center.x}px ${center.y}px)`;
+    }
+    getClipPathValue() {
+        const center = this._projectToCanvas();
+        const cam = this.camera;
+
+        const getPxFromWorld = (worldRadius) => {
+            const pt = new THREE.Vector3(
+                this.root.position.x + worldRadius,
+                this.root.position.y,
+                this.root.position.z
+            ).project(cam);
+            const w = this._mountEl?.getBoundingClientRect().width ?? window.innerWidth;
+            return (pt.x + 1) / 2 * w;
+        };
+
+        // Use the compensated radius to match the scaled hoop geometry
+        const rotY = this.root.rotation.y;
+        const cosY = Math.abs(Math.cos(rotY)) > 0.001 ? Math.cos(rotY) : 1;
+        const innerWorldR = (this._pxToWorld(this._radiusPx) - this._pxToWorld(this._tubePx)) / cosY;
+        const innerPx = Math.floor(Math.abs(getPxFromWorld(innerWorldR) - center.x));
+
+        return `circle(${innerPx}px at ${center.x}px ${center.y}px)`;
     }
 
     /**

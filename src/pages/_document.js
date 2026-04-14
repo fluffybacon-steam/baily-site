@@ -7,7 +7,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-                 <link
+        <link
           rel="preload"
           href="/fonts/Nexa-Bold.woff2"
           as="font"

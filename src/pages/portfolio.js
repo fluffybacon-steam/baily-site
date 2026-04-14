@@ -2,21 +2,21 @@ import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 import { page_transition } from "@/lib/helper";
 import Showcase from "@/components/Showcase.js";
+import { useChevronScene } from '@/context/ChevronSceneContext';
 
 const Portfolio = () => {
     const articleRef = useRef(null);
-    const iconRef = useRef(null);
+    const { sceneRef, chevronRef } = useChevronScene();
+    // const iconRef = useRef(null);
 
     useGSAP(() => {
         console.log("useGSAP running!");
-        if(articleRef.current 
-            // && articleRef.current.classList.contains("loading")
-        ){
-            console.log("fetching animation to play...");
-            // articleRef.current.classList.remove("loading");
-            const page_in_tl = page_transition(articleRef);
-            console.log("page_in_tl",page_in_tl); 
-            if(page_in_tl){
+         if (articleRef.current) {
+            const page_in_tl = page_transition(articleRef, {
+                scene:   sceneRef?.current,
+                chevron: chevronRef?.current,
+            });
+            if (page_in_tl) {
                 page_in_tl.duration(2).play();
             }
         }

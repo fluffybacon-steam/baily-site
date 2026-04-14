@@ -143,10 +143,17 @@ export class Chevron {
         );
     }
 
-    setColor(target, color) {
-        const c = new THREE.Color(color);
-        if (target === 'arm1' || target === 'both') this.material1.color.set(c);
-        if (target === 'arm2' || target === 'both') this.material2.color.set(c);
+    setColor(target, colorStart, colorEnd) {
+        if (target === 'arm1' || target === 'both') {
+            this.material1.map?.dispose();
+            this.material1.map = createGradientTexture(colorStart, colorEnd ?? colorStart);
+            this.material1.needsUpdate = true;
+        }
+        if (target === 'arm2' || target === 'both') {
+            this.material2.map?.dispose();
+            this.material2.map = createGradientTexture(colorStart, colorEnd ?? colorStart);
+            this.material2.needsUpdate = true;
+        }
     }
 
     // ── DOM alignment ─────────────────────────────────────────────────────────

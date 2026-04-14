@@ -12,72 +12,70 @@ export default () => {
     const sceneRef   = useRef(null);
 
     return (
-        <div className="callouts_container" ref={containerRef} style={{position: 'relative', overflow: 'visible'}}>
-            <Scene 
-            // debug={1} 
-            width="100vw" 
-            height="125%" 
-            inset="-25% 0 0 0"
-            onReady={({ chevron, scene })  => {
-                calloutAnimation(chevron, scene, containerRef);
-            }} />
-            <div className="callout_wrapper">
-                <div className="circle-outline"></div>
-                <div className="circle-color">
-                    <h2>Buy a website designed and developed for you</h2>
-                </div>
-                <div className='copy-wrapper'>
-                    <p>Today anyone can make a website today, just as anyone can snap a photo with their phone. But there comes the time when you need a photographer: A professional with the equipment and experience to create the most value.
-                    </p>
-                    <p>We design and develop custom websites as a profession. Built with the features & services you require. With us, your peers and clients will make no mistake who built your digital storefront: An expert.
-                    </p>
-                </div>
-            </div>
-
-            <div className="callout_wrapper">
-                <div className="circle-outline"></div>
-                <div className="circle-color">
-                    <h2>Buy a website designed and developed for you</h2>
-                </div>
-                <div className='copy-wrapper'>
-                    <p>Today anyone can make a website today, just as anyone can snap a photo with their phone. But there comes the time when you need a photographer: A professional with the equipment and experience to create the most value.
-                    </p>
-                    <p>Today anyone can make a website today, just as anyone can snap a photo with their phone. But there comes the time when you need a photographer: A professional with the equipment and experience to create the most value.
-                    </p>
-                    <p>We design and develop custom websites as a profession. Built with the features & services you require. With us, your peers and clients will make no mistake who built your digital storefront: An expert.
-                    </p>
-                </div>
-            </div>
-
-            {/* <div className="callout_wrapper">
-                <div className="circle-outline"></div>
-                <div className="circle-color">
+        <section className="callouts_container" ref={containerRef}>
+            <div className="max-content" style={{position: 'relative', overflow: 'visible'}}>
+                <Scene 
+                // debug={1} 
+                width="100vw" 
+                height="100%" 
+                inset="0 0 0 0"
+                onReady={({ chevron, scene })  => {
+                    calloutAnimation(chevron, scene, containerRef);
+                }} />
+                <div className="callout_wrapper callout_wrapper--1" data-color="#9d4edd" data-color-hoop="#9d4edd">
+                    <div className="circle-outline"></div>
+                    <div className="circle-color">
+                        {/* <h2>Stop apologizing for your link and start flaunting it.</h2> */}
+                        <h2>Build instant credibility with a world-class design</h2>
+                    </div>
                     <div className='copy-wrapper'>
-                        <h2>Be seen by more with online advertising</h2>
-                        <p>
-                            Advertising online makes it easier than ever to reach your target audience. 
-                            It's also never been easier to waste funds doing so. Google, Meta and Reddit advertising 
-                            dashboards are engineered to encourage overspending.
+                        <p>Anyone can take a photo, but there comes a time when you need a photographer. A professional with the vision, equipment, and experience to capture the moment.
                         </p>
-                        <p>
-                            We handle the technical settings and optimize the money you spend. We'll take the guess work out campaigns and deliver the results you desire
+                        <p>We don't do "templates." We engineer custom digital storefronts built around your specific features and services. When we're finished, your peers and clients will make no mistake about who built your site: an expert who understands that your online presence is synonymous with reputation.
                         </p>
                     </div>
                 </div>
-            </div>
 
-            <div className="callout_wrapper">
-                <div className="circle-outline"></div>
-                <div className="circle-color">
+                <div className="callout_wrapper callout_wrapper--2" data-color="#9ef01a" data-color-hoop="#9ef01a">
+                    <div className="circle-outline"  ></div>
+                    <div className="circle-color" >
+                        <h2>Stop hoping for sales Start engineering for them</h2>
+                    </div>
                     <div className='copy-wrapper'>
-                        <h2>Full-stack development for any challenges</h2>
+                        <p>Social media makes buying ads easy, but without data, you aren't marketing: you're gambling. We specialize in data-driven campaigns that turn views into value.</p>
+                        <p>Are you in an industry we haven't conquered yet? <b>You get 50% off your discovery invoice.</b> We get the experience; you get the results.</p>
+                    </div>
+                </div>
+
+                <div className="callout_wrapper callout_wrapper--3" data-color="#ba181b" data-color-hoop="#ba181b">
+                    <div className="circle-outline"></div>
+                    <div className="circle-color" >
+                        <h2>We translate your ideas into every digital language.</h2>
+                    </div>
+                    <div className='copy-wrapper'>
                         <p>
-                            Websites are just the beginning. At our core, we are a problem solving company who utilizes software to support practical solutions. Whether it's mobile app development or deep-dive technical analysis, I am your technical partner for everything digital.
+                            Our technical expertise goes far beyond websites. We are fullstack developers, capable of crafting any kind of software you desire.
+                        </p>
+                        <p>
+                            Mobile App development, Software Development, AI Integrations. Nothing is foreign to us.
                         </p>
                     </div>
                 </div>
-            </div> */}
-        </div>
+
+                {/* <div className="callout_wrapper" data-color="#ba181b" data-color-hoop="#ba181b">
+                    <div className="circle-outline"></div>
+                    <div className="circle-color" >
+                        <h2>Tech fails. We don't</h2>
+                    </div>
+                    <div className='copy-wrapper'>
+                        <p>There is nothing more frustrating than a "simple" tech issue stalling a sale or halting a deadline.
+                        </p>
+                        <p>We patch problems before they happen.</p>
+                    </div>
+                </div> */}
+
+            </div>
+        </section>
     )
 }
 

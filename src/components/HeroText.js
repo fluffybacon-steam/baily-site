@@ -1,6 +1,6 @@
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { useRef } from 'react';
+import { useRef, useState} from 'react';
 import SplitText from "gsap/dist/SplitText";
 gsap.registerPlugin(SplitText);
 
@@ -12,58 +12,58 @@ gsap.registerPlugin(ScrollTrigger);
 import Scene, { fireHeroAnimation } from '@/components/Scene.js';
 
 const HeroText = ({ text }) => {
-  const titleWrapRef = useRef(null);
+  const heroWrapRef = useRef(null);
   const svgRef = useRef(null);
   const headlineRef = useRef(null);
   const arrowDownRef = useRef(null);
 
-  const chevronRef = useRef(null);
-  const sceneRef   = useRef(null);
 //   const textTop = text || 'Hohman Digital';
 
   useGSAP(() => {
     //  console.log('svgRef',svgRef.current);
-    if (titleWrapRef.current && headlineRef.current) {
+    if (heroWrapRef.current && headlineRef.current) {
 
-        // const opening_animation = craftOpeningAnimation(titleWrapRef,svgRef);
         const headline_animation = craftHeadlineAnimation(headlineRef.current);
 
         headline_animation.then(() => {
-            console.log(titleWrapRef.current.dataset);
-            titleWrapRef.current.dataset.animated = 1;
+            console.log(heroWrapRef.current.dataset);
+            heroWrapRef.current.dataset.animated = 1;
         });
 
         headline_animation.duration(2).play();   
 
-        // leaving_animation.duration(6).repeat(10).play();  
         
     }
   }, { scope: svgRef, dependencies: [text] });
 
   return (
-    <div className="hero-wrapper" style={{position: 'relative', overflow: 'visible'}}>
-        <Scene inset="-50% 0 0 0" onReady={({ chevron, scene }) => {
-            fireHeroAnimation(chevron, scene);
+    <section className="hero-wrapper" ref={heroWrapRef}>
+        <Scene 
+        inset="-50% 0 0 0" 
+        width="100vw" height="150%" onReady={({ chevron, scene }) => {
+            fireHeroAnimation(chevron, scene, heroWrapRef);
         }} />
-        <div ref={titleWrapRef} className={'Hero'}>
-            <h1 className="text"><span>hohman</span><span>digital</span></h1>
-            <div className='ball'></div>
-            {/* <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' /> */}
-        </div>
-        <div ref={headlineRef} className="headline">
-            Building 
-            <div className='spinner'>
-                <span>memorable</span>
-                <span>digital</span>
-                <span>creative</span>
-                {/* <span>engaging</span>  */}
-                {/* <span>impactful</span> 
-                <span>premium</span> */}
+        <div className="max-content">
+            <div className={'logo'}>
+                <h1 className="text"><span>hohman</span><span>digital</span></h1>
+                <div className='ball'></div>
+                {/* <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' /> */}
             </div>
-            experiences
+            <div ref={headlineRef} className="headline">
+                Building 
+                <div className='spinner'>
+                    <span>memorable</span>
+                    <span>digital</span>
+                    <span>creative</span>
+                    {/* <span>engaging</span>  */}
+                    {/* <span>impactful</span> 
+                    <span>premium</span> */}
+                </div>
+                experiences
+            </div>
+            <div ref={arrowDownRef} className='arrow-down'></div>
         </div>
-        <div ref={arrowDownRef} className='arrow-down'></div>
-    </div>
+    </section>
   );
 };
 

@@ -3,7 +3,7 @@ import gsap from 'gsap';
 import { Chevron } from '@/3dcomponents/Chrevon.js';
 import { Hoop }    from '@/3dcomponents/Hoop.js';
 
-export class ChevronScene {
+export class Scene {
     /**
      * @param {HTMLElement} mountEl
      * @param {object}      opts
@@ -183,7 +183,7 @@ export class ChevronScene {
     getElementWorldPosition(target, { anchor = 'center', z = 0, offsetX = 0, offsetY = 0 } = {}) {
         const el = typeof target === 'string' ? document.querySelector(target) : target;
         if (!el) {
-            console.warn(`ChevronScene.getElementWorldPosition: element not found — "${target}"`);
+            console.warn(`Scene.getElementWorldPosition: element not found — "${target}"`);
             return null;
         }
 
@@ -252,7 +252,7 @@ export class ChevronScene {
 
         this.scene.add(dot, hLine, vLine);
 
-        console.group('ChevronScene.testPixelToWorld');
+        console.group('Scene.testPixelToWorld');
         console.log('pixel input:  ', { pixelX, pixelY });
         console.log('ndc:          ', { ndcX, ndcY });
         console.log('world output: ', { x: world.x, y: world.y, z: world.z });
@@ -271,6 +271,33 @@ export class ChevronScene {
         vLine.geometry.dispose();
     }
 
+    setCanvasClipToHoops(hoops) {
+        document.getElementById('__hoop-clip')?.remove();
+
+        const circles = hoops.map(hoop => {
+            const { x, y } = hoop._projectToCanvas();
+            const r = hoop.getInnerRadiusPx();
+            return `<circle cx="${x}" cy="${y}" r="${r}"/>`;
+        }).join('');
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('id', '__hoop-clip');
+        svg.style.cssText = 'position:absolute;width:0;height:0;';
+        svg.innerHTML = `
+            <defs>
+                <clipPath id="hoop-holes" clipPathUnits="userSpaceOnUse">
+                    ${circles}
+                </clipPath>
+            </defs>`;
+        this._mountEl.appendChild(svg);
+        this.renderer.domElement.style.clipPath = 'url(#hoop-holes)';
+    }
+    
+    clearCanvasClip() {
+        document.getElementById('__hoop-clip')?.remove();
+        this.renderer.domElement.style.clipPath = 'none';
+    }
+
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
     destroy() {
@@ -286,6 +313,8 @@ export class ChevronScene {
         this._hoops.clear();
     }
 }
+
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
