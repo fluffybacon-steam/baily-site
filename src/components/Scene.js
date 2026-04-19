@@ -2,22 +2,26 @@ import { ColumnWorld } from '@/3dcomponents/ColumnWorld';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { ChevronScene } from '@/3dcomponents/ChevronScene.js';
+import { RenderScene } from '@/3dcomponents/RenderScene.js';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { createPortal } from 'react-dom';
+import { Fog }    from '@/3dcomponents/Fog.js';
+import { Mirror, createRainbowMirror} from '@/3dcomponents/Mirror.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '100vh', inset = "0px" }) => {
+const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '100vh', inset = "0px", position="absolute", name = ""}) => {
     const canvasRef   = useRef(null);
-    const [chevron, setChevron] = useState(null);
+    // const [chevron, setChevron] = useState(null);
 
     useEffect(() => {
-        const sceneInstance = new ChevronScene(canvasRef.current);
-        const c = sceneInstance.addChevron(chevronOpts);
-        setChevron(c);
+        const sceneInstance = new RenderScene(canvasRef.current);
 
-        onReady?.({ chevron: c, scene: sceneInstance });
+        // const c = sceneInstance.addChevron(chevronOpts);
+        // setChevron(c);
+
+        // onReady?.({ chevron: c, scene: sceneInstance });
+        onReady?.({ scene: sceneInstance });
 
         return () => {
             sceneInstance.destroy();
@@ -29,8 +33,9 @@ const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '10
         <>
             <div
                 ref={canvasRef}
+                name={name}
                 className='scene-wrapper'
-                style={{ zIndex: 0, position: 'absolute', pointerEvents: 'none', 
+                style={{ zIndex: 0, position: position, pointerEvents: 'none', 
                     width, height, inset,
                 }}
                 >{debug && ( <ChevronDevBox chevron={chevron} inset={"65% 0px 0% 77%"}/>)}
@@ -42,121 +47,260 @@ const Scene = ({ debug, onReady, chevronOpts = {}, width = '100vw', height = '10
 export default Scene;
 
 
-export function fireColumnAnimation(scene, setColumnWorld) {
-    const gridX = 100;
-    const gridZ = 15;
-    const spacing = 10;
-    const baseHeight = 50;
+ 
+export function fireColumnAnimation(scene) {
+    const camera  = scene.camera;
+    const mountEl = scene._mountEl;
+    // const maxContent = document.querySelector(".max-content");
+    const targetPosition = scene.getElementWorldPosition('.hero-wrapper > .max-content', { anchor: "center", z: 0});
 
-    const columns = new ColumnWorld(scene, {
-        gridX, gridZ, spacing, baseHeight,
-        rowShift: 5,
-        colShift: 0,
-        palette: ['#00aeef'],
-        baseWidth: 5,
-        widthVariance: 0,
-        heightVariance: 0,
-        position: { x: 0, y: -225, z: -109.5 },
-        rotation: { x: -0.12, y: 0, z: 0 },
-        dance: {
-            mode: 'spiral',
-            frequency: 0.1,
-            magnitude: 2,
-            wavelength: 1,
-            phase: 0,
-            colorShift: { hue: 233 - 196, saturation: -0.49, lightness: -0.11 },
-        },
-        mouse: { enabled: true, magnitude: 25, radius: 40 },
-    });
-    setColumnWorld?.(columns);
 
-    // ── Position columns so front row tops sit at viewport bottom ────────
-    const frontRowWorldZ = columns.root.position.z + (gridZ - 1) * spacing / 2;
-    const viewportBottomY = columns.getViewportBottomY(frontRowWorldZ);
-    columns.root.position.y = viewportBottomY - baseHeight;
+    mountEl.parentNode.style.zIndex = -1;
+    scene.scene.children[1].intensity  = 2.0;
+    scene.scene.children[2].intensity  = 1.0;
+    // scene._ambientLight.intensity  = 0;
 
-    // ── Tick loop ────────────────────────────────────────────────────────
-    const clock = { start: Date.now() };
-    gsap.ticker.add(() => {
-        columns.update((Date.now() - clock.start) / 1000);
+    const rad_min = (window.innerWidth > 768) ? 35 : 10;
+    const rad_max = (window.innerWidth > 768) ? 37 : 12;
+    const orb_size = (window.innerWidth > 768) ? 1 : 0.25
+    const comet_center = (window.innerWidth > 768) ? { x: 0, y: 0, z: -(camera.position.z/2) } : targetPosition 
+
+    const comet1 = scene.addOrb('comet1', {
+        center: comet_center,
+        radius: Math.random() * (rad_max - rad_min) + rad_min,
+        radiusY: Math.random() * (rad_max - rad_min) + rad_min,             
+        frequency: 0.15,
+        clockwise: true,
+        tilt: { x: 0, y: 0 },   // tilted orbit plane
+        color: '#00ff00',
+        size: orb_size,
+        intensity: 1000,
+        // trailLength: 5,
+        // trailDuration: 0.2,
     });
 
-    // Pre-scroll light sweep
-    gsap.fromTo(
-        columns._topLight.position,
-        { x: 100 },
-        { x: 0, duration: 0.7, ease: 'power3.inOut' },
-        0.7,
-    );
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Hero column — sits visibly in the grid center from the start.
-    // Looks identical to every other column until the grid spreads
-    // apart and it's the last one standing.
-    // ─────────────────────────────────────────────────────────────────────
+    const comet2 = scene.addOrb('comet2', {
+        center: comet_center,
+        radius: Math.random() * (rad_max - rad_min) + rad_min,
+        radiusY: Math.random() * (rad_max - rad_min) + rad_min,    
+        frequency: 0.1,
+        clockwise: true,
+        tilt: { x: 45, y: 0},   // tilted orbit plane
+        color: 'red',
+        size: orb_size,
+        intensity: 1000,
+        // trailLength: 20,
+        // trailDuration: 0.02,
+    });
 
-    const cam = scene.camera;
+    const comet3 = scene.addOrb('comet3', {
+        center: comet_center,
+        radius: Math.random() * (rad_max - rad_min) + rad_min,
+        radiusY: Math.random() * (rad_max - rad_min) + rad_min,    
+        frequency: 0.15,
+        clockwise: false,
+        tilt: { x: -45, y: -45 },   // tilted orbit plane
+        color: 'blue',
+        size: orb_size,
+        intensity: 1000,
+        // trailLength: 0,
+        // trailDuration: 0,
+    });
 
-    // ─────────────────────────────────────────────────────────────────────
-    // Scroll timeline (scrubbed over 150vh)
-    //
-    //  0 %──── 25 % ──── 50 % ──── 70 % ──── 100 %
-    //  │ centre cols │ spread + approach │ hero settles │
-    //  │ straighten  │ dampen effects    │ grid fades   │
-    // ─────────────────────────────────────────────────────────────────────
+    const comets = [comet1,comet2,comet3];
 
-    // The "centred" Y: camera is at y=0, column visual midpoint
-    // should also be at y=0 → root.y = −baseHeight/2
-    const centeredY = -baseHeight;
+    const fog = new Fog(scene, {
+        type: 'exponential',
+        color: '#fffff',
+        density: 0.00,
+        near : -50,
+        far : 50,
+        syncBackground: false,  // keep your transparent alpha background
+    });
 
-    const leaveTl = gsap.timeline({
+    let leaveTl;
+    let cubes = [];
+    // if (window.innerWidth > 768) {
+        const cube_z = scene.getZForOrbitPercent(35, 0.5);
+
+        const cube_zlayer_offset = 10;
+        const cube_layers = 5;
+        const cube_size_dist = {start: 3, end: 5};
+
+        const start_z = cube_z*2 - (cube_zlayer_offset * (cube_layers - 1)) / 2;
+        for (let i = 1; i <= cube_layers; i++){
+            const z_position = start_z + (i * cube_zlayer_offset);
+
+            const p_mag = 20;
+            const pivotOffset = (i % 2) ? p_mag : 0 ;
+            console.log('pivotOffset',pivotOffset, (i % 2));
+
+            cubes.push(
+                scene.addCube('cube1_'+i, {
+                size: Math.random() * (cube_size_dist.end - cube_size_dist.start) + cube_size_dist.start,
+                color: '#ffffff',
+                opacity: 0.6,
+                position: { x: -p_mag, y: -pivotOffset, z: z_position },
+                // endPosition: { x: 20, y: 20, z: 10 },
+                // duration: 20,
+                // ease: 'power1.inOut',
+                tumble: true,                         
+                tumbleSpeed: { x:2, y:4, z: 5 },  
+                })
+            )
+            
+            cubes.push(
+                scene.addCube('cube2_'+i, {
+                size: Math.random() * (cube_size_dist.end - cube_size_dist.start) + cube_size_dist.start,
+                color: '#ffffff',
+                opacity: 0.6,
+                position: { x: p_mag, y: pivotOffset, z: z_position },
+                // endPosition: { x: 20, y: -15, z: 10 },
+                // duration: 20,
+                // ease: 'power1.inOut',
+                tumble: true,                         
+                tumbleSpeed: { x:2, y:4, z: -5 },  
+                })
+            )
+
+            cubes.push( 
+                scene.addCube('cube3_'+i, {
+                size: Math.random() * (cube_size_dist.end - cube_size_dist.start) + cube_size_dist.start,
+                color: '#ffffff',
+                opacity: 0.6,
+                position: { x: pivotOffset, y: -p_mag, z: z_position },
+                // endPosition: { x: 20, y: -15, z: 10 },
+                // duration: 20,
+                // ease: 'power1.inOut',
+                tumble: true,                         
+                tumbleSpeed: { x:-2, y:4, z: 5 },  
+                })
+            )
+
+            cubes.push( 
+                scene.addCube('cube4_'+i, {
+                size: 2,
+                color: '#ffffff',
+                opacity: 0.6,
+                position: { x: -pivotOffset, y: p_mag, z: z_position },
+                // endPosition: { x: 20, y: -15, z: 10 },
+                // duration: 20,
+                // ease: 'power1.inOut',
+                tumble: true,                         
+                tumbleSpeed: { x:2, y: -4, z: 5 },  
+                })
+            )
+
+        }
+
+        cubes.forEach((cube) => {
+            const pos = cube.root.position;
+            const jitter_xy = 5;
+            const jitter_z = 2;
+            pos.x += (Math.random() - 0.5) * jitter_xy * 2;
+            pos.y += (Math.random() - 0.5) * jitter_xy * 2;
+            pos.z += (Math.random() - 0.5) * jitter_z;
+        });
+
+        const radius = 15
+        const strength = 100
+        cubes.forEach((cube) => {
+            const pos = cube.root.position;
+            const dist = Math.sqrt(pos.x ** 2 + pos.y ** 2);
+            if (dist > radius) return;
+
+            const baseAngle = Math.atan2(pos.y, pos.x) || (Math.random() * Math.PI * 2);
+            const angle = baseAngle + (Math.random() - 0.5) * 1.2;
+
+            const push = strength * (1 - dist / radius);
+            cube.setVelocity({
+                x: Math.cos(angle) * push,
+                y: Math.sin(angle) * push,
+                z: 0,
+            });
+        });
+
+
+
+    const hero_wrapper_height = document.querySelector('.hero-wrapper')?.offsetHeight ?? '50vh';
+    leaveTl = gsap.timeline({
         scrollTrigger: {
-            trigger: 'body',
-            start: 'top top',
-            end: 'top+=150vh top',
+            trigger: 'html',
+            start: 'top 0%',
+            end: `top+=${hero_wrapper_height}px 50%`,
             scrub: 1,
+            // markers:1,
         },
+        onLeave: ()=>{
+            comets.forEach(comet =>{
+                comet.root.visible = false;
+            })
+        },
+        onEnterBack: ()=>{
+            comets.forEach(comet =>{
+                comet.root.visible = true;
+            })
+        }
     });
+    
+    // const maxContentEl = document.querySelector('.callouts_container > .max-content');
+    // const targetPixelWidth = maxContentEl.offsetWidth;
 
-    // ── Phase 1 (0 – 25 %): Centre + straighten ─────────────────────────
+    leaveTl
+        .to(camera.position, { 
+            z: -(camera.position.z), 
+            duration: 1,
+            ease: 'none',
 
-    // Lift columns from bottom-aligned → vertically centred with camera
-    leaveTl.to(columns.root.position, {
-        y: centeredY,
-        duration: 0.25,
-        ease: 'none',
-    }, 0);
+        }, 0)
+        .to(camera.rotation, {
+            z: D2R(90),
+            duration: 1,
+            ease: 'none',
+        }, 0)
 
-    // Straighten the tilt so columns face the camera head-on
-    leaveTl.to(columns.root.rotation, {
-        x: 0,
-        duration: 0.25,
-        ease: 'none',
-    }, 0);
+        leaveTl.to([comet2._pivot.rotation,comet3._pivot.rotation],{
+            x: D2R(0),
+            duration: 1,
+        },0)
+
+    // } else {
+    //     const cube_mobile = scene.addCube('cubespecial', {
+    //         size: 5,
+    //         color: '#ffffff',
+    //         opacity: 0.6,
+    //         position: targetPosition,
+    //         tumble: true,                         
+    //         tumbleSpeed: { x:5, y:10, z: 5 },  
+    //     });
+
+    //     const hero_wrapper = document.querySelector('.hero-wrapper');
+    //     leaveTl = gsap.timeline({
+    //         scrollTrigger: {
+    //             trigger: 'html',
+    //             start: 'top 0%',
+    //             end: `top+=${hero_wrapper.offsetHeight}px 25%`,
+    //             scrub: 1,
+    //             markers:1,
+    //         },
+    //     });
+    //     leaveTl
+    //         .to(camera.position, { 
+    //             y: 10,
+    //             z: 10, 
+    //             duration: 1,
+    //             ease: 'none',
+
+    //         }, 0)
+    //         .to(camera.position, {
+    //             z: -50,
+    //             duration: 1,
+    //             ease: 'none',
+    //         }, 0)
+    // }
 
 
-    // ── Dampen dance ─────────────────────────────────────────────────────
-    leaveTl.to(columns._dance, {
-        magnitude: 0,
-        duration: 0.3,
-        ease: 'none',
-    }, 0.05);
-
-    // ── Dampen colour shift ──────────────────────────────────────────────
-    leaveTl.to(columns._dance.colorShift, {
-        hue: 0,
-        saturation: 0,
-        lightness: 0,
-        duration: 0.3,
-        ease: 'none',
-    }, 0.05);
-
-    // ── Kill mouse effect ────────────────────────────────────────────────
-    leaveTl.to(columns._mouse, {
-        magnitude: 0,
-        duration: 0.2,
-        ease: 'none',
-    }, 0);
 
 }
 
@@ -170,9 +314,14 @@ export function fireColumnAnimation(scene, setColumnWorld) {
  *   4. Scroll-out: chevron rises, camera descends, spiral dampens,
  *      mouse fades, columns compress to zero spacing
  */
-export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
+// export function fireHeroAnimation(chevron, scene, heroWrapRef) {
+export function fireHeroAnimation(scene, heroWrapRef) {
+    console.log("fireHeroAnimation",heroWrapRef.current);
     if (!heroWrapRef.current) return false;
 
+    
+    const chevron = scene.addChevron();
+ 
     // ── Prevent scroll until hero animation finishes ─────────────────────────
     const preventScroll = (e) => e.preventDefault();
     window.addEventListener('wheel',     preventScroll, { passive: false });
@@ -181,7 +330,7 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
     // ── DOM references ──────────────────────────────────────────────────────
     const container = heroWrapRef.current.querySelector('.logo');
     const text      = container.querySelector('.text');
-    const ball      = container.querySelector('.ball');
+    // const ball      = container.querySelector('.ball');
     const rect      = text.getBoundingClientRect();
 
     // ── Pre-calculate world positions ───────────────────────────────────────
@@ -204,6 +353,27 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
         z:       targetZ,
     });
 
+    //  scene.scene.fog = new THREE.Fog( '#2d388a', targetZ-10, 100);
+
+    // At targetZ, the chevron's world height maps to this many pixels
+    const chevronPixelHeight = rect.height * magicNum1;
+    console.log("chevronPixelHeight",chevronPixelHeight)
+    const chevronWorldHeight = 15 + 2 * 2; // c_height + c_radius * 2 (defaults from Chevron)
+    const pxPerUnit = chevronPixelHeight / chevronWorldHeight;
+
+    // Ball should appear 3.978x smaller
+    const ballTargetPixelHeight = chevronPixelHeight / 3.978;
+
+    const ballSize = (rect.height * magicNum1) / 3.978 / (chevronPixelHeight / (15 + 2 * 2));
+    const ballMat = new THREE.MeshBasicMaterial({ color: 0x00aeef, wireframe: true });
+    const ball = new THREE.Mesh(new THREE.SphereGeometry(ballSize / 2, 6, 6), ballMat);
+    ball.position.set(destPos.x + ballSize + 1, destPos.y + magicNum2, targetZ);
+    scene.scene.add(ball);
+
+    // const solidMat = new THREE.MeshBasicMaterial({ color: 0x00aeef, transparent: true, opacity: 0 });
+    // const solidBall = new THREE.Mesh(new THREE.SphereGeometry(ballSize / 2, 32, 32), ballMat);
+    // ball.add(solidBall);
+
     // ── Set stage ───────────────────────────────────────────────────────────
     chevron.setRotation(0, 0, 90);
     chevron.setPosition(startPos.x, startPos.y, startPos.z);
@@ -211,7 +381,7 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
     const currentOffset = parseFloat(
         getComputedStyle(container).getPropertyValue('--flip-offset') || '0'
     );
-    const targetOffset = currentOffset + rect.height * magicNum1;
+    const targetOffset = currentOffset + rect.height/2 * magicNum1;
 
     // ── Hero entry timeline ─────────────────────────────────────────────────
     const tl = gsap.timeline();
@@ -220,6 +390,12 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
         .add(
             chevron.open(), { duration: 0.7 }
         , 0)
+
+        .to(ball.rotation, {
+            y: Math.PI/8 ,
+            ease: 'none',
+            duration: 1.4,
+        },0 )
 
         // Fly in from right
         .to(chevron.root.position, {
@@ -241,6 +417,9 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
                 const localPct = ((rightEdgePx - textRect.left) / textRect.width * 100).toFixed(3);
                 text.style.clipPath = `inset(0 0 0 ${localPct}%)`;
             },
+            onComplete: () =>{
+                text.style.clipPath = `inset(0 0 0 0%)`;
+            }
         }, 0.7)
 
         // CSS text flip
@@ -264,14 +443,14 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
         }), 0.7)
 
         // Ball slides in
-        .fromTo(ball,
-            { left: 'calc(0px - var(--ball-size))' },
-            {
-                left: `calc(${container.offsetWidth / 2 - targetOffset}px - var(--ball-size))`,
-                duration: 0.5,
-                ease:     'power3.out',
-            },
-        1.4)
+        // .fromTo(ball,
+        //     { left: 'calc(0px - var(--ball-size))' },
+        //     {
+        //         left: `calc(${container.offsetWidth / 2 - targetOffset}px - var(--ball-size))`,
+        //         duration: 0.5,
+        //         ease:     'power3.out',
+        //     },
+        // 1.4)
 
         // Chevron settles to final X
         .to(chevron.root.position, {
@@ -293,11 +472,28 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
             ease: 'power3.out',
         }, 1.4)
 
+        .add(()=> {
+            ballMat.wireframe = false
+            ball.geometry.dispose();
+            ball.geometry = new THREE.SphereGeometry(ballSize / 2, 32, 32);
+        }, 1.45);
+
+        // .to(solidMat, {
+        //     opacity: 1,
+        //     duration: 0.5,
+        //     ease: 'power2.inOut',
+        //     onComplete: () => {
+        //         ballMat.wireframe = false;
+        //         ball.remove(solidBall);
+        //         solidMat.dispose();
+        //     }
+        // }, 1.6);
+
         // Ball grows
-        .fromTo(ball,
-            { '--ball-size': '0cqw' },
-            { '--ball-size': '4cqw', duration: 0.5, ease: 'power3.out' },
-        1.6);
+        // .fromTo(ball,
+        //     { '--ball-size': '0cqw' },
+        //     { '--ball-size': '4cqw', duration: 0.5, ease: 'power3.out' },
+        // 1.6);
 
     tl.duration(1.5);
 
@@ -328,48 +524,573 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
     });
 }
 
-//version 1
+// export function calloutAnimation(chevron, scene, containerRef) {
+export function calloutAnimation(scene, containerRef) {
+    if (!containerRef.current) return;
+
+    const chevron = scene.addChevron();
+
+    const callouts = containerRef.current.querySelectorAll('.callout_wrapper');
+    const isMobile = window.innerWidth < 768;
+
+    const callout_tl = gsap.timeline({
+        scrollTrigger: {
+            trigger: containerRef.current,
+            start:   "top 50%",
+            end:     "bottom 33%",
+            scrub:   2,
+            // markers: true,
+        }
+    });
+
+    // Desktop-only: tighten the circle-color pills to the text width
+    if (!isMobile) {
+        const tightenCircleColors = () => {
+            callouts.forEach(wrapper => {
+                const h2 = wrapper.querySelector('.circle-color h2');
+                const circleColor = wrapper.querySelector('.circle-color');
+                if (!h2 || !circleColor) return;
+
+                circleColor.style.width = '';
+
+                requestAnimationFrame(() => {
+                    const range = document.createRange();
+                    range.selectNodeContents(h2);
+                    const textRect = range.getBoundingClientRect();
+                    const padding = parseFloat(getComputedStyle(circleColor).paddingLeft)
+                                + parseFloat(getComputedStyle(circleColor).paddingRight);
+                    circleColor.style.width = `${Math.ceil(textRect.width + padding + textRect.height)}px`;
+                });
+            });
+        };
+        tightenCircleColors();
+        window.addEventListener('resize', tightenCircleColors);
+    } else {
+        scene.destroy();
+    }
+
+    // ── Shared helpers ─────────────────────────────────────────────────────────
+
+    const getCalloutEls = (wrapper) => ({
+        circle_outline: wrapper.querySelector('.circle-outline'),
+        circle_color:   wrapper.querySelector('.circle-color'),
+        copy:           wrapper.querySelector('.copy-wrapper'),
+        heading:        wrapper.querySelector('.circle-color h2'),
+        color:          wrapper.dataset.color,
+        hoop_color:     wrapper.dataset.colorHoop ?? '#00aeef'
+    });
+
+    const getCalloutPositions = (circle_outline, circle_color, targetZ, circle_rect) => ({
+        startPos:        scene.getElementWorldPosition(circle_outline, { anchor: 'left',   z: targetZ }),
+        centerPos:       scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: targetZ }),
+        endPos:          scene.getElementWorldPosition(circle_outline, { anchor: 'right',  z: targetZ }),
+        textTargetRight: scene.getElementWorldPosition(circle_color,   { anchor: 'right',  z: targetZ, offsetX: -circle_rect.width / 2 }),
+        textTargetLeft:  scene.getElementWorldPosition(circle_color,   { anchor: 'left',   z: targetZ, offsetX: circle_rect.width / 2 }),
+    });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // DESKTOP ANIMATIONS
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const animateCallout0_desktop = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect = circle_outline.getBoundingClientRect();
+        const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.75);
+        const hoop        = scene.addHoop('ring_0', { radiusPx: 80, tubePx: 2, z: targetZ, color: hoop_color });
+
+        const { startPos, centerPos, endPos, textTargetRight } = getCalloutPositions(circle_outline, circle_color, targetZ, circle_rect);
+        const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width });
+
+        gsap.set(circle_color, {
+            x:        -circle_rect.width,
+            '--bg':   'transparent',
+            clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: -heading.offsetWidth });
+
+        hoop.setPosition(centerPos.x, centerPos.y, centerPos.z);
+        hoop.setSize(circle_rect.width, circle_rect.height);
+        chevron.setAngle(27.5);
+
+        hoop.enablePortal();
+        hoop.clipChevron(chevron);
+
+        chevron.setPosition(startPos.x, startPos.y, startPos.z);
+        chevron.setRotation(0, 0, -90);
+
+        const blindCount = 8;
+        const blindRect = circle_color.getBoundingClientRect();
+        const blindWidth = (blindRect.width) / blindCount * 1.5;
+
+        const blindEls = Array.from({ length: blindCount }, (_, i) => {
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position: absolute;
+                width: ${blindWidth}px;
+                height: 200%;
+                background: var(--bg);
+                left: ${(i / blindCount) * 100}%;
+                top: -50%;
+                transform-origin: center center;
+                transform: translateX(-50%) rotateZ(45deg) scaleX(0);
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el };
+        });
+
+        callout_tl
+            .add(chevron.setAngle(45, { duration: 1, ease: "expo.in" }), 0)
+            .fromTo(chevron.root.position,
+                { x: offCenterPos.x, y: offCenterPos.y, z: offCenterPos.z },
+                { x: endPos.x,       y: endPos.y,       z: endPos.z,       duration: 1, ease: 'power2.in' },
+                0
+            )
+            .to({}, {
+                duration: 0.001,
+                onStart:           () => hoop.releaseChevron(chevron),
+                onReverseComplete: () => hoop.clipChevron(chevron),
+            }, 0.95)
+            .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 1)
+            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 1)
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: -circle_rect.width / 2,
+                duration: 1,
+                ease: 'none'
+            }, 1)
+            .to(heading, { x: 0 + circle_rect.width / 3 }, 2);
+
+        blindEls.forEach(({ el }, i) => {
+            callout_tl.fromTo(el,
+                { rotateZ: 45, scaleX: 0 },
+                { rotateZ: 0, scaleX: 2, duration: 1.2, ease: 'power4.inOut' },
+                2 + i * 0.1
+            );
+        });
+
+        callout_tl.fromTo(copy,
+            { y: -50, opacity: 0 },
+            { y: 0,   opacity: 1 },
+            3
+        )
+        .to(chevron.root.rotation, { z: D2R(-180), x: D2R(-31), ease: 'none', duration: 0.30 }, 2.85)
+        .to(chevron.root.position, { z: chevron.root.position.z - 10, ease: 'none', duration: 0.15 }, 2.85);
+    };
+
+    const animateCallout1_desktop = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect      = circle_outline.getBoundingClientRect();
+        const in_plane_targetZ = chevron.getZForPixelHeight(circle_rect.height * 0.75);
+        const behind_targetZ   = in_plane_targetZ - 20;
+        const hoop             = scene.addHoop('ring_1', { radiusPx: 80, tubePx: 2, z: in_plane_targetZ, color: hoop_color });
+        hoop.setSize(circle_rect.width, circle_rect.height);
+
+        const { centerPos, textTargetLeft } = getCalloutPositions(circle_outline, circle_color, in_plane_targetZ, circle_rect);
+        const behind_centerPos = scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: behind_targetZ });
+
+        gsap.set(circle_color, {
+            x:        circle_rect.width,
+            '--bg':   'transparent',
+            clipPath: `inset(0px 0px 0% ${circle_rect.width}px round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: heading.offsetWidth });
+
+        hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
+
+        const colCount = 13;
+        const colGap = -1;
+        const colRect = circle_color.getBoundingClientRect();
+        const colWidth = (colRect.width - colGap * (colCount - 1)) / colCount;
+
+        const colEls = Array.from({ length: colCount }, (_, i) => {
+            const el = document.createElement('div');
+            const fromAbove = i % 2 === 0;
+            el.style.cssText = `
+                position: absolute;
+                width: ${colWidth}px;
+                height: 100%;
+                background: var(--bg);
+                left: ${i * (colWidth + colGap)}px;
+                top: 0;
+                transform: translateY(${fromAbove ? '-100%' : '100%'});
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el, fromAbove };
+        });
+
+        callout_tl
+            .to(chevron.root.position, { x: behind_centerPos.x, y: behind_centerPos.y, z: behind_targetZ, duration: 1 }, 3)
+            .to(chevron.root.rotation, { x: D2R(-90), duration: 0.25 }, 3.75)
+            .to(chevron.root.position, { x: centerPos.x, y: centerPos.y, z: in_plane_targetZ, duration: 0.15 }, 4)
+            .to(chevron.root.rotation, { y: D2R(45), duration: 0.15 }, 4)
+            .add(chevron.setAngle(27.5, { duration: 0.15 }), 4.15)
+            .to(chevron.root.rotation, { z: D2R(180), x: D2R(-90), duration: 0, ease: 'power2.out' }, 4.15)
+            .to(chevron.root.rotation, { x: D2R(0), y: D2R(0), z: D2R(90), duration: 0.15, ease: 'power2.out' }, 4.15)
+            .add(chevron.setAngle(45, { duration: 0.4 }), 4.3)
+            .to(chevron.root.position, { x: textTargetLeft.x, duration: 1.85, ease: 'none' }, 4.15)
+            .to(chevron.root.rotation, { x: D2R(180), duration: 1, ease: 'power2.inOut' }, 4.85)
+            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 4.15)
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: circle_rect.width / 2,
+                duration: 1,
+                ease: 'none'
+            }, 4.15)
+            .to(heading, { x: 0 - circle_rect.width / 3 }, 5);
+
+        colEls.slice().reverse().forEach(({ el, fromAbove }, i) => {
+            callout_tl.fromTo(el,
+                { y: fromAbove ? '-100%' : '100%' },
+                { y: '0%', duration: 1.5, ease: 'power3.inOut' },
+                4.5 + i * 0.12
+            );
+        });
+
+        callout_tl.fromTo(copy,
+            { y: -50, opacity: 0 },
+            { y: 0,   opacity: 1 },
+            6
+        )
+        .to(chevron.root.rotation, { z: D2R(0), y: D2R(-5), ease: 'none', duration: 0.30 }, 5.85);
+    };
+
+    const animateCallout2_desktop = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect      = circle_outline.getBoundingClientRect();
+        const in_plane_targetZ = chevron.getZForPixelHeight(circle_rect.height * 0.75);
+        const behind_targetZ   = in_plane_targetZ - 20;
+
+        const hoop = scene.addHoop('ring_2', { radiusPx: 80, tubePx: 2, z: in_plane_targetZ, color: hoop_color });
+        hoop.setSize(circle_rect.width, circle_rect.height);
+
+        const { centerPos } = getCalloutPositions(circle_outline, circle_color, in_plane_targetZ, circle_rect);
+        const behind_centerPos = scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: behind_targetZ, offsetY: circle_rect.height });
+
+        gsap.set(circle_color, {
+            x:        -circle_rect.width,
+            '--bg':   'transparent',
+            clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: -heading.offsetWidth });
+
+        hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
+        hoop.enablePortal();
+
+        const circleCount = 15;
+        const freq = 3;
+        const amplitude = 0.35;
+
+        const circleEls = Array.from({ length: circleCount }, (_, i) => {
+            const t = i / (circleCount - 1);
+            const x = t * 100;
+            const y = 50 + amplitude * 100 * Math.sin(t * freq * Math.PI * 2);
+            const size = 50 + Math.random() * 150;
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: var(--bg);
+                left: ${x}%;
+                top: ${y}%;
+                transform: translate(-50%, -50%) scale(0);
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el, dur: 3 + Math.random() * 2 };
+        });
+
+        callout_tl
+            .to(chevron.root.position, { x: behind_centerPos.x, y: behind_centerPos.y, z: behind_targetZ, duration: 1 }, 6)
+            .add(chevron.setAngle(27.5, { duration: 1 }), 6)
+            .to({}, {
+                duration: 0.001,
+                onStart:           () => hoop.clipChevron(chevron),
+                onReverseComplete: () => hoop.releaseChevron(chevron),
+            }, 6.35)
+            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 6)
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: -circle_rect.width / 2,
+                duration: 1,
+                ease: 'none'
+            }, 6)
+            .to(heading, { x: 0 + circle_rect.width / 3 }, 7)
+            .fromTo(copy,
+                { y: -50, opacity: 0 },
+                { y: 0,   opacity: 1 },
+                8
+            );
+
+        circleEls.forEach(({ el, dur }) => {
+            callout_tl.fromTo(el, { scale: 0 }, { scale: 3, duration: dur, ease: 'power4.inOut' }, 7.5);
+            callout_tl.fromTo(el, { x: -150 },  { x: 0,     duration: dur, ease: 'none' },          7.5);
+        });
+    };
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // MOBILE ANIMATIONS  (no chevron — pure DOM pill reveals)
+    // ═══════════════════════════════════════════════════════════════════════════
+    //
+    // Timeline layout per callout (3s bucket each):
+    //   t+0.0 → pill paints from offscreen (duration 1)
+    //   t+0.5 → decorative fill cascade (blinds / columns / bubbles)
+    //   t+1.0 → heading slides into view (duration 1)
+    //   t+2.0 → copy fades up (duration 1)
+    //
+    // Callout 0: 0–3   |   Callout 1: 3–6   |   Callout 2: 6–9
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const animateCallout0_mobile = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect = circle_outline.getBoundingClientRect();
+
+        gsap.set(circle_color, {
+            x:        -circle_rect.width,
+            '--bg':   color,
+            clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: -heading.offsetWidth, paddingRight: circle_rect.width / 4, });
+
+        // Diagonal blind fill (left-to-right)
+        const blindCount = 8;
+        const blindRect  = circle_color.getBoundingClientRect();
+        const blindWidth = (blindRect.width) / blindCount * 1.5;
+
+        const blindEls = Array.from({ length: blindCount }, (_, i) => {
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position: absolute;
+                width: ${blindWidth}px;
+                height: 200%;
+                background: var(--bg);
+                left: ${(i / blindCount) * 100}%;
+                top: -50%;
+                transform-origin: center center;
+                transform: translateX(-50%) rotateZ(45deg) scaleX(0);
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el };
+        });
+
+        callout_tl
+            // Paint the pill left → right
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: 0,
+                duration: 1,
+                ease: 'none'
+            }, 0)
+            // Heading slides in from the left
+            .to(heading, { x: 0 + circle_rect.width / 4, duration: 1 }, 1);
+
+        // Blinds cascade left-to-right
+        blindEls.forEach(({ el }, i) => {
+            callout_tl.fromTo(el,
+                { rotateZ: 45, scaleX: 0 },
+                { rotateZ: 0, scaleX: 2.5, duration: 1.2, ease: 'power4.inOut' },
+                0.5 + i * 0.1
+            );
+        });
+
+        // Copy reveal
+        callout_tl.fromTo(copy,
+            { y: -50, opacity: 0 },
+            { y: 0,   opacity: 1 },
+            2
+        );
+    };
+
+    const animateCallout1_mobile = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect = circle_outline.getBoundingClientRect();
+
+        gsap.set(circle_color, {
+            x:        circle_rect.width,
+            '--bg':   color,
+            clipPath: `inset(0px 0px 0% ${circle_rect.width}px round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: heading.offsetWidth, paddingLeft: circle_rect.width / 4, });
+
+        // Vertical column fill — alternating from above/below
+        const colCount = 13;
+        const colGap   = -1;
+        const colRect  = circle_color.getBoundingClientRect();
+        const colWidth = (colRect.width - colGap * (colCount - 1)) / colCount;
+
+        const colEls = Array.from({ length: colCount }, (_, i) => {
+            const el = document.createElement('div');
+            const fromAbove = i % 2 === 0;
+            el.style.cssText = `
+                position: absolute;
+                width: ${colWidth}px;
+                height: 100%;
+                background: var(--bg);
+                left: ${i * (colWidth + colGap)}px;
+                top: 0;
+                transform: translateY(${fromAbove ? '-100%' : '100%'});
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el, fromAbove };
+        });
+
+        callout_tl
+            // Paint the pill right → left
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: 0,
+                duration: 1,
+                ease: 'none'
+            }, 3)
+            // Heading slides in from the right
+            .to(heading, { x: 0 - circle_rect.width / 4, duration: 1 }, 4);
+
+        // Columns drop in, right-to-left cascade
+        colEls.slice().reverse().forEach(({ el, fromAbove }, i) => {
+            callout_tl.fromTo(el,
+                { y: fromAbove ? '-100%' : '100%' },
+                { y: '0%', duration: 1.5, ease: 'power3.inOut' },
+                3.5 + i * 0.08
+            );
+        });
+
+        // Copy reveal
+        callout_tl.fromTo(copy,
+            { y: -50, opacity: 0 },
+            { y: 0,   opacity: 1 },
+            5
+        );
+    };
+
+    const animateCallout2_mobile = (wrapper) => {
+        const { circle_outline, circle_color, heading, copy, color } = getCalloutEls(wrapper);
+        if (!heading) return;
+
+        const circle_rect = circle_outline.getBoundingClientRect();
+
+        gsap.set(circle_color, {
+            x:        -circle_rect.width,
+            '--bg':   color,
+            clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+        });
+        gsap.set(heading, { x: -heading.offsetWidth, paddingRight: circle_rect.width / 4 });
+
+        // Sinusoidal row of expanding bubbles
+        const circleCount = 15;
+        const freq        = 3;
+        const amplitude   = 0.35;
+
+        const circleEls = Array.from({ length: circleCount }, (_, i) => {
+            const t = i / (circleCount - 1);
+            const x = t * 100;
+            const y = 50 + amplitude * 100 * Math.sin(t * freq * Math.PI * 2);
+            const size = 30 + Math.random() * 90; // smaller range for mobile pill
+            const el = document.createElement('div');
+            el.style.cssText = `
+                position: absolute;
+                width: ${size}px;
+                height: ${size}px;
+                border-radius: 50%;
+                background: var(--bg);
+                left: ${x}%;
+                top: ${y}%;
+                transform: translate(-50%, -50%) scale(0);
+                z-index: -1;
+            `;
+            circle_color.appendChild(el);
+            return { el, dur: 2 + Math.random() * 1.5 };
+        });
+
+        callout_tl
+            // Paint the pill left → right
+            .to(circle_color, {
+                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+                x: 0,
+                duration: 1,
+                ease: 'none'
+            }, 6)
+            // Heading slides in from the left
+            .to(heading, { x: 0 + circle_rect.width / 4, duration: 1 }, 7);
+
+        // Bubbles expand and drift
+        circleEls.forEach(({ el, dur }) => {
+            callout_tl.fromTo(el, { scale: 0 }, { scale: 3, duration: dur, ease: 'power4.inOut' }, 6.5);
+            callout_tl.fromTo(el, { x: -150 },  { x: 0,     duration: dur, ease: 'none' },          6.5);
+        });
+
+        // Copy reveal
+        callout_tl.fromTo(copy,
+            { y: -50, opacity: 0 },
+            { y: 0,   opacity: 1 },
+            8
+        );
+    };
+
+    // ── Dispatch ───────────────────────────────────────────────────────────────
+
+    const handlers = isMobile
+        ? [animateCallout0_mobile, animateCallout1_mobile, animateCallout2_mobile]
+        : [animateCallout0_desktop, animateCallout1_desktop, animateCallout2_desktop];
+
+    callouts.forEach((wrapper, index) => {
+        handlers[index]?.(wrapper);
+    });
+}
+
 // export function calloutAnimation(chevron, scene, containerRef) {
 //     if (!containerRef.current) return;
-
+    
 //     const callouts = containerRef.current.querySelectorAll('.callout_wrapper');
-//     const canvas   = scene.renderer.domElement;
-
-//     // Hoops sit this many units in front of the chevron to prevent z-fighting
-//     const HOOP_Z_OFFSET = 5;
+//     // chevron.setColor("both", '#e7e7e7', '#8e8e8e');
 
 //     const callout_tl = gsap.timeline({
 //         scrollTrigger: {
 //             trigger: containerRef.current,
 //             start:   "top 50%",
-//             end:     "bottom 50%",
+//             end:     "bottom 33%",
 //             scrub:   2,
 //             markers: true,
 //         }
 //     });
 
-//     const tightenCircleColors = () => {
-//         callouts.forEach(wrapper => {
-//             const h2 = wrapper.querySelector('.circle-color h2');
-//             const circleColor = wrapper.querySelector('.circle-color');
-//             if (!h2 || !circleColor) return;
+//     //Not needed f0r mobile
+//     // const tightenCircleColors = () => {
+//     //     callouts.forEach(wrapper => {
+//     //         const h2 = wrapper.querySelector('.circle-color h2');
+//     //         const circleColor = wrapper.querySelector('.circle-color');
+//     //         if (!h2 || !circleColor) return;
 
-//             // Clear so it re-wraps at natural grid width
-//             circleColor.style.width = '';
+//     //         // Clear so it re-wraps at natural grid width
+//     //         circleColor.style.width = '';
 
-//             requestAnimationFrame(() => {
-//                 const range = document.createRange();
-//                 range.selectNodeContents(h2);
-//                 const textRect= range.getBoundingClientRect();
-//                 const padding = parseFloat(getComputedStyle(circleColor).paddingLeft) 
-//                             + parseFloat(getComputedStyle(circleColor).paddingRight);
-//                 circleColor.style.width = `${Math.ceil(textRect.width + padding + textRect.height)}px`;
-//             });
-//         });
-//     };
+//     //         requestAnimationFrame(() => {
+//     //             const range = document.createRange();
+//     //             range.selectNodeContents(h2);
+//     //             const textRect= range.getBoundingClientRect();
+//     //             const padding = parseFloat(getComputedStyle(circleColor).paddingLeft) 
+//     //                         + parseFloat(getComputedStyle(circleColor).paddingRight);
+//     //             circleColor.style.width = `${Math.ceil(textRect.width + padding + textRect.height)}px`;
+//     //         });
+//     //     });
+//     // };
 
-//     tightenCircleColors();
-//     window.addEventListener('resize', tightenCircleColors);
+//     // tightenCircleColors();
+//     // window.addEventListener('resize', tightenCircleColors);
 
 //     // ── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -397,34 +1118,35 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
 //     if (!heading) return;
 
 //     const circle_rect = circle_outline.getBoundingClientRect();
-//     const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.75);
-//     const hoop        = scene.addHoop('ring_0', { radiusPx: 80, tubePx: 2, z: targetZ, color: hoop_color });
+//     const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.5);
+//     // const hoop        = scene.addHoop('ring_0', { radiusPx: 80, tubePx: 2, z: targetZ, color: hoop_color });
 
 //     const { startPos, centerPos, endPos, textTargetRight } = getCalloutPositions(circle_outline, circle_color, targetZ, circle_rect);
-//     const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width / 2 });
+//     const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width });
 
 //     gsap.set(circle_color, {
 //         x:        -circle_rect.width,
-//         '--bg':   'transparent',
+//         '--bg':   color,
 //         clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
 //     });
 //     gsap.set(heading, { x: -heading.offsetWidth });
 
-//     hoop.setPosition(centerPos.x, centerPos.y, centerPos.z);
-//     hoop.setSize(circle_rect.width, circle_rect.height);
-//     chevron.setAngle(27.5);
+//     // hoop.setPosition(centerPos.x, centerPos.y, centerPos.z);
+//     // hoop.setSize(circle_rect.width, circle_rect.height);
+//     // chevron.setAngle(27.5);
 
 //     // ── Portal: clip chevron to ring_0 so it appears to emerge from it ──────
-//     hoop.enablePortal();
-//     hoop.clipChevron(chevron);
+//     // hoop.enablePortal();
+//     // hoop.clipChevron(chevron);
 
 //     chevron.setPosition(startPos.x, startPos.y, startPos.z);
 //     chevron.setRotation(0, 0, -90);
 
-//     const blindCount = 10;
+//     const blindCount = 8;
 //     const blindRect = circle_color.getBoundingClientRect();
-//     const blindWidth = blindRect.width / blindCount * 1.5; // overlap to cover gaps when rotated
-
+//     const blindWidth = (blindRect.width) / blindCount * 1.5; // overlap to cover gaps when rotated
+    
+//     // left: calc(${(i / blindCount) * 100}% + ${circle_rect.width}px);
 //     const blindEls = Array.from({ length: blindCount }, (_, i) => {
 //         const el = document.createElement('div');
 //         el.style.cssText = `
@@ -444,37 +1166,37 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
 
 
 //     callout_tl
-//         .add(chevron.setAngle(45, { duration: 1 }), 0)
-//         .fromTo(chevron.root.position,
-//             { x: offCenterPos.x, y: offCenterPos.y, z: offCenterPos.z },
-//             { x: endPos.x,       y: endPos.y,       z: endPos.z,       duration: 1, ease: 'power2.in' },
-//             0
-//         )
+//         .add(chevron.setAngle(45, { duration: 1, ease:"expo.in" }), 0)
+//         // .fromTo(chevron.root.position,
+//         //     { x: offCenterPos.x, y: offCenterPos.y, z: offCenterPos.z },
+//         //     { x: endPos.x,       y: endPos.y,       z: endPos.z,       duration: 1, ease: 'power2.in' },
+//         //     0
+//         // )
 
 //         // ── Sentinel: release clip once chevron has fully cleared ring_0 ────
 //         // onStart fires when scrubbing forward past t=1.0 (chevron just exited right edge)
 //         // onReverseComplete fires when scrubbing back past t=1.0 (re-enter the ring)
-//         .to({}, {
-//             duration: 0.001,
-//             onStart:           () => hoop.releaseChevron(chevron),
-//             onReverseComplete: () => hoop.clipChevron(chevron),
-//         }, 1.0)
+//         // .to({}, {
+//         //     duration: 0.001,
+//         //     onStart:           () => hoop.releaseChevron(chevron),
+//         //     onReverseComplete: () => hoop.clipChevron(chevron),
+//         // }, 0.95)
 
-//         .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 1)
-//         .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 1)
+//         .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 0)
+//         // .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' },  0)
 //         .to(circle_color, {  
 //             clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
-//             x: -circle_rect.width / 2, 
+//             x: 0, 
 //             duration: 1, 
 //             ease: 'none' }, 1)
 
-//         .to(heading, { x: 0 + circle_rect.width / 3 }, 2);
+//         .to(heading, { x: 0 + circle_rect.width / 4, duration: 1 }, 2);
 
 //         blindEls.forEach(({ el }, i) => {
 //             callout_tl.fromTo(el,
 //                 { rotateZ: 45, scaleX: 0 },
-//                 { rotateZ: 0, scaleX: 2, duration: 1.2, ease: 'power4.inOut' },
-//                 2 + i * 0.1
+//                 { rotateZ: 0, scaleX: 2.5, duration: 1.2, ease: 'power4.inOut' },
+//                 1.5 + i * 0.1
 //             );
 //         });
 
@@ -486,9 +1208,9 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
 //             opacity: 1
 //         }, 3)
 
-//         .to(chevron.root.rotation, { z: D2R(-180), x: D2R(-31), ease: 'none', duration: 0.30 }, 2.85)
+//         .to(chevron.root.rotation, { z: D2R(-180), x: D2R(-31), ease: 'none', duration: 0.30 }, 1.5)
 
-//         .to(chevron.root.position, { z: chevron.root.position.z - 10, ease: 'none', duration: 0.15 }, 2.85);
+//         .to(chevron.root.position, { z: chevron.root.position.z - 10, ease: 'none', duration: 0.15 }, 1.5);
 // };
 
 //     const animateCallout1 = (wrapper) => {
@@ -514,7 +1236,7 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
 //         hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
 
 //         const colCount = 13;
-//         const colGap = 0; // px gap between columns, 0 for seamless fill
+//         const colGap = -1; // px gap between columns, 0 for seamless fill
 
 //         const colRect = circle_color.getBoundingClientRect();
 //         const colWidth = (colRect.width - colGap * (colCount - 1)) / colCount;
@@ -743,438 +1465,50 @@ export function fireHeroAnimation(chevron, scene, heroWrapRef, setColumnWorld) {
 //     });
 // }
 
-//version 2 with pin
-export function calloutAnimation(chevron, scene, containerRef) {
-    if (!containerRef.current) return;
-
-    const callouts = containerRef.current.querySelectorAll('.callout_wrapper');
-    chevron.setColor("both", '#e7e7e7', '#8e8e8e');
-
-
-    const callout_tl = gsap.timeline({
-        scrollTrigger: {
-            trigger: containerRef.current,
-            start:   "top 50%",
-            end:     "bottom 33%",
-            scrub:   2,
-            // markers: true,
-        }
-    });
-
-    const tightenCircleColors = () => {
-        callouts.forEach(wrapper => {
-            const h2 = wrapper.querySelector('.circle-color h2');
-            const circleColor = wrapper.querySelector('.circle-color');
-            if (!h2 || !circleColor) return;
-
-            // Clear so it re-wraps at natural grid width
-            circleColor.style.width = '';
-
-            requestAnimationFrame(() => {
-                const range = document.createRange();
-                range.selectNodeContents(h2);
-                const textRect= range.getBoundingClientRect();
-                const padding = parseFloat(getComputedStyle(circleColor).paddingLeft) 
-                            + parseFloat(getComputedStyle(circleColor).paddingRight);
-                circleColor.style.width = `${Math.ceil(textRect.width + padding + textRect.height)}px`;
-            });
-        });
-    };
-
-    tightenCircleColors();
-    window.addEventListener('resize', tightenCircleColors);
-
-    // ── Shared helpers ─────────────────────────────────────────────────────────
-
-    const getCalloutEls = (wrapper) => ({
-        circle_outline: wrapper.querySelector('.circle-outline'),
-        circle_color:   wrapper.querySelector('.circle-color'),
-        copy:           wrapper.querySelector('.copy-wrapper'),
-        heading:        wrapper.querySelector('.circle-color h2'),
-        color:          wrapper.dataset.color,
-        hoop_color:     wrapper.dataset.colorHoop ?? '#00aeef'
-    });
-
-    let getCalloutPositions = (circle_outline, circle_color, targetZ, circle_rect) => ({
-        startPos:        scene.getElementWorldPosition(circle_outline, { anchor: 'left',   z: targetZ }),
-        centerPos:       scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: targetZ }),
-        endPos:          scene.getElementWorldPosition(circle_outline, { anchor: 'right',  z: targetZ }),
-        textTargetRight: scene.getElementWorldPosition(circle_color,   { anchor: 'right',  z: targetZ, offsetX: -circle_rect.width / 2 }),
-        textTargetLeft:  scene.getElementWorldPosition(circle_color,   { anchor: 'left',   z: targetZ, offsetX: circle_rect.width / 2 }),
-    });
-
-    
-
-   const animateCallout0 = (wrapper) => {
-    const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
-    if (!heading) return;
-
-    const circle_rect = circle_outline.getBoundingClientRect();
-    const targetZ     = chevron.getZForPixelHeight(circle_rect.height * 0.75);
-    const hoop        = scene.addHoop('ring_0', { radiusPx: 80, tubePx: 2, z: targetZ, color: hoop_color });
-
-    const { startPos, centerPos, endPos, textTargetRight } = getCalloutPositions(circle_outline, circle_color, targetZ, circle_rect);
-    const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width });
-
-    gsap.set(circle_color, {
-        x:        -circle_rect.width,
-        '--bg':   'transparent',
-        clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
-    });
-    gsap.set(heading, { x: -heading.offsetWidth });
-
-    hoop.setPosition(centerPos.x, centerPos.y, centerPos.z);
-    hoop.setSize(circle_rect.width, circle_rect.height);
-    chevron.setAngle(27.5);
-
-    // ── Portal: clip chevron to ring_0 so it appears to emerge from it ──────
-    hoop.enablePortal();
-    hoop.clipChevron(chevron);
-
-    chevron.setPosition(startPos.x, startPos.y, startPos.z);
-    chevron.setRotation(0, 0, -90);
-
-    const blindCount = 8;
-    const blindRect = circle_color.getBoundingClientRect();
-    const blindWidth = (blindRect.width) / blindCount * 1.5; // overlap to cover gaps when rotated
-    
-    // left: calc(${(i / blindCount) * 100}% + ${circle_rect.width}px);
-    const blindEls = Array.from({ length: blindCount }, (_, i) => {
-        const el = document.createElement('div');
-        el.style.cssText = `
-            position: absolute;
-            width: ${blindWidth}px;
-            height: 200%;
-            background: var(--bg);
-            left: ${(i / blindCount) * 100}%;
-            top: -50%;
-            transform-origin: center center;
-            transform: translateX(-50%) rotateZ(45deg) scaleX(0);
-            z-index: -1;
-        `;
-        circle_color.appendChild(el);
-        return { el };
-    });
-
-
-    callout_tl
-        .add(chevron.setAngle(45, { duration: 1, ease:"expo.in" }), 0)
-        .fromTo(chevron.root.position,
-            { x: offCenterPos.x, y: offCenterPos.y, z: offCenterPos.z },
-            { x: endPos.x,       y: endPos.y,       z: endPos.z,       duration: 1, ease: 'power2.in' },
-            0
-        )
-
-        // ── Sentinel: release clip once chevron has fully cleared ring_0 ────
-        // onStart fires when scrubbing forward past t=1.0 (chevron just exited right edge)
-        // onReverseComplete fires when scrubbing back past t=1.0 (re-enter the ring)
-        .to({}, {
-            duration: 0.001,
-            onStart:           () => hoop.releaseChevron(chevron),
-            onReverseComplete: () => hoop.clipChevron(chevron),
-        }, 0.95)
-
-        .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 1)
-        .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 1)
-        .to(circle_color, {  
-            clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
-            x: -circle_rect.width / 2, 
-            duration: 1, 
-            ease: 'none' }, 1)
-
-        .to(heading, { x: 0 + circle_rect.width / 3 }, 2);
-
-        blindEls.forEach(({ el }, i) => {
-            callout_tl.fromTo(el,
-                { rotateZ: 45, scaleX: 0 },
-                { rotateZ: 0, scaleX: 2, duration: 1.2, ease: 'power4.inOut' },
-                2 + i * 0.1
-            );
-        });
-
-        callout_tl.fromTo(copy, {
-            y:-50,
-            opacity: 0
-        },{
-            y:0,
-            opacity: 1
-        }, 3)
-
-        .to(chevron.root.rotation, { z: D2R(-180), x: D2R(-31), ease: 'none', duration: 0.30 }, 2.85)
-
-        .to(chevron.root.position, { z: chevron.root.position.z - 10, ease: 'none', duration: 0.15 }, 2.85);
-};
-
-    const animateCallout1 = (wrapper) => {
-        const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
-        if (!heading) return;
-
-        const circle_rect      = circle_outline.getBoundingClientRect();
-        const in_plane_targetZ = chevron.getZForPixelHeight(circle_rect.height * 0.75);
-        const behind_targetZ   = in_plane_targetZ - 20;
-        const hoop             = scene.addHoop('ring_1', { radiusPx: 80, tubePx: 2, z: in_plane_targetZ, color: hoop_color });
-        hoop.setSize(circle_rect.width, circle_rect.height);
-
-        const { centerPos, textTargetLeft } = getCalloutPositions(circle_outline, circle_color, in_plane_targetZ, circle_rect);
-        const behind_centerPos = scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: behind_targetZ });
-
-        gsap.set(circle_color, {
-            x:        circle_rect.width,
-            '--bg':   'transparent',
-            clipPath: `inset(0px 0px 0% ${circle_rect.width}px round ${circle_rect.height}px)`,
-        });
-        gsap.set(heading, { x: heading.offsetWidth });
-
-        hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
-
-        const colCount = 13;
-        const colGap = -1; // px gap between columns, 0 for seamless fill
-
-        const colRect = circle_color.getBoundingClientRect();
-        const colWidth = (colRect.width - colGap * (colCount - 1)) / colCount;
-
-        const colEls = Array.from({ length: colCount }, (_, i) => {
-            const el = document.createElement('div');
-            const fromAbove = i % 2 === 0; // alternate above/below
-            el.style.cssText = `
-                position: absolute;
-                width: ${colWidth}px;
-                height: 100%;
-                background: var(--bg);
-                left: ${i * (colWidth + colGap)}px;
-                top: 0;
-                transform: translateY(${fromAbove ? '-100%' : '100%'});
-                z-index: -1;
-            `;
-            circle_color.appendChild(el);
-            return { el, fromAbove };
-        });
-
-        callout_tl
-            .to(chevron.root.position,{ 
-                x: behind_centerPos.x, 
-                y: behind_centerPos.y, 
-                z: behind_targetZ, 
-                duration: 1 
-            }, 3)
-
-            .to(chevron.root.rotation, { 
-                x: D2R (-90),
-                duration: 0.25 
-            }, 3.75)
-
-            .to(chevron.root.position,{ 
-                x: centerPos.x, 
-                y: centerPos.y, 
-                z: in_plane_targetZ, 
-                duration: 0.15 
-            }, 4)
-
-            .to(chevron.root.rotation, { 
-                y: D2R(45),
-                duration: 0.15
-            }, 4)
-
-            .add(chevron.setAngle(27.5, { duration: 0.15 }), 4.15)
-            // .add(chevron.setAngle(45, { duration: 0.15 }), 4.15)
-
-            .to(chevron.root.rotation, { 
-                z: D2R(180),
-                x: D2R(-90),
-                duration: 0,
-                ease: 'power2.out'
-            }, 4.15)
-            
-            .to(chevron.root.rotation, { 
-                x: D2R(0),
-                y: D2R(0),
-                z: D2R(90),
-                duration: 0.15,
-                ease: 'power2.out'
-            }, 4.15)
-
-            .add(chevron.setAngle(45, { duration: 0.4 }), 4.3)
-
-            .to(chevron.root.position,{ 
-                x: textTargetLeft.x, 
-                duration: 1.85,
-                ease: 'none'
-            }, 4.15)
-
-            .to(chevron.root.rotation,{ 
-                x: D2R(180), 
-                duration: 1,
-                ease: 'power2.inOut'
-            }, 4.85)
-
-            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 4.15)
-            .to(circle_color,{ 
-                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
-                x: circle_rect.width / 2, 
-                duration: 1, 
-                ease: 'none' 
-            }, 4.15)
-            
-            .to(heading,{ 
-                x: 0 - circle_rect.width / 3 
-            }, 5);
-
-            colEls.slice().reverse().forEach(({ el, fromAbove }, i) => {
-                callout_tl.fromTo(el,
-                    { 
-                        // width: colWidth, 
-                        y: fromAbove ? '-100%' : '100%' },
-                    { 
-                        // width: colWidth + colGap, 
-                        y: '0%', duration: 1.5, ease: 'power3.inOut' },
-                    4.5 + i * 0.12
-                );
-            });
-
-            callout_tl.fromTo(copy, {
-                y:-50,
-                opacity: 0
-            },{
-                y:0,
-                opacity: 1
-            }, 6)
-
-            .to(chevron.root.rotation,{   
-                z: D2R(0), 
-                y: D2R(-5), 
-                ease: 'none', 
-                duration: 0.30 
-            }, 5.85)
-    };
-
-    const animateCallout2 = (wrapper) => {
-        const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
-        if (!heading) return;
-
-        const circle_rect      = circle_outline.getBoundingClientRect();
-        const in_plane_targetZ = chevron.getZForPixelHeight(circle_rect.height * 0.75);
-        const behind_targetZ   = in_plane_targetZ - 20;
-
-        const hoop = scene.addHoop('ring_2', { radiusPx: 80, tubePx: 2, z: in_plane_targetZ, color: hoop_color });
-        hoop.setSize(circle_rect.width, circle_rect.height);
-
-        const { startPos, centerPos, endPos, textTargetRight } = getCalloutPositions(circle_outline, circle_color, in_plane_targetZ, circle_rect);
-        const behind_centerPos = scene.getElementWorldPosition(circle_outline, { anchor: 'center', z: behind_targetZ, offsetY: circle_rect.height });
-
-        gsap.set(circle_color, {
-            x:        -circle_rect.width,
-            '--bg':   'transparent',
-            clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
-        });
-        gsap.set(heading, { x: -heading.offsetWidth });
-
-        hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
-        hoop.enablePortal();
-
-        const circleCount = 15;
-        const freq = 3; // number of full oscillations
-        const amplitude = 0.35; // fraction of container height
-
-        const rect = circle_color.getBoundingClientRect();
-        const w = rect.width;
-        const h = rect.height;
-
-        const circleEls = Array.from({ length: circleCount }, (_, i) => {
-            const t = i / (circleCount - 1); // 0 → 1 across width
-            const x = t * 100; // % left
-            const y = 50 + amplitude * 100 * Math.sin(t * freq * Math.PI * 2); // % top
-
-            const size = 50 + Math.random() * 150;
-            const el = document.createElement('div');
-            el.style.cssText = `
-                position: absolute;
-                width: ${size}px;
-                height: ${size}px;
-                border-radius: 50%;
-                background: var(--bg);
-                left: ${x}%;
-                top: ${y}%;
-                transform: translate(-50%, -50%) scale(0);
-                z-index: -1;
-            `;
-            circle_color.appendChild(el);
-            return { el, dur: 3 + Math.random() * 2 };
-        });
-
-        callout_tl
-            .to(chevron.root.position, {
-                x: behind_centerPos.x,
-                y: behind_centerPos.y,
-                z: behind_targetZ,
-                duration: 1
-            }, 6)
-
-            .add(chevron.setAngle(27.5, { duration: 1 }), 6)
-
-            .to({}, {
-                duration: 0.001,
-                onStart:           () => hoop.clipChevron(chevron),
-                onReverseComplete: () => hoop.releaseChevron(chevron),
-            }, 6.35)
-
-            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 6)
-            .to(circle_color, { 
-                clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
-                x: -circle_rect.width / 2, 
-                duration: 1, ease: 'none' }, 6)
-
-            .to(heading, { x: 0 + circle_rect.width / 3 }, 7)
-
-            .fromTo(copy, {
-                y: -50,
-                opacity: 0
-            }, {
-                y: 0,
-                opacity: 1
-            }, 8)
-
-        circleEls.forEach(({ el, dur }) => {
-            callout_tl.fromTo(el,
-                { scale: 0, },
-                { scale: 3, duration: dur, ease: 'power4.inOut' },
-                7.5
-            );
-            callout_tl.fromTo(el,
-                { x: -150, },
-                { x: 0, duration: dur, ease: 'none' },
-                7.5
-            );
-        });
-
-    };
-
-    // ── Dispatch ───────────────────────────────────────────────────────────────
-
-    const handlers = [animateCallout0, animateCallout1, animateCallout2];
-
-    callouts.forEach((wrapper, index) => {
-        handlers[index]?.(wrapper);
-    });
-}
-
 // export function calloutAnimation(chevron, scene, containerRef) {
 //     if (!containerRef.current) return;
 
 //     const callouts = containerRef.current.querySelectorAll('.callout_wrapper');
-//     const canvas   = scene.renderer.domElement;
+//     // chevron.setColor("both", '#e7e7e7', '#8e8e8e');
 
-//     // Hoops sit this many units in front of the chevron to prevent z-fighting
-//     const HOOP_Z_OFFSET = 5;
 
 //     const callout_tl = gsap.timeline({
 //         scrollTrigger: {
 //             trigger: containerRef.current,
 //             start:   "top 50%",
-//             end:     "bottom 75%",
-//             scrub:   1,
+//             end:     "bottom 33%",
+//             scrub:   2,
 //             markers: true,
 //         }
 //     });
+
+//     // callout_tl.to(containerRef.current.querySelector('.max-content'), {
+//     //     backgroundColor: '#1daae5',
+//     //     duration:0,
+//     // },0)
+
+//     const tightenCircleColors = () => {
+//         callouts.forEach(wrapper => {
+//             const h2 = wrapper.querySelector('.circle-color h2');
+//             const circleColor = wrapper.querySelector('.circle-color');
+//             if (!h2 || !circleColor) return;
+
+//             // Clear so it re-wraps at natural grid width
+//             circleColor.style.width = '';
+
+//             requestAnimationFrame(() => {
+//                 const range = document.createRange();
+//                 range.selectNodeContents(h2);
+//                 const textRect= range.getBoundingClientRect();
+//                 const padding = parseFloat(getComputedStyle(circleColor).paddingLeft) 
+//                             + parseFloat(getComputedStyle(circleColor).paddingRight);
+//                 circleColor.style.width = `${Math.ceil(textRect.width + padding + textRect.height)}px`;
+//             });
+//         });
+//     };
+
+//     tightenCircleColors();
+//     window.addEventListener('resize', tightenCircleColors);
 
 //     // ── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -1195,6 +1529,7 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //         textTargetLeft:  scene.getElementWorldPosition(circle_color,   { anchor: 'left',   z: targetZ, offsetX: circle_rect.width / 2 }),
 //     });
 
+    
 
 //    const animateCallout0 = (wrapper) => {
 //     const { circle_outline, circle_color, heading, copy, color, hoop_color } = getCalloutEls(wrapper);
@@ -1205,8 +1540,13 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //     const hoop        = scene.addHoop('ring_0', { radiusPx: 80, tubePx: 2, z: targetZ, color: hoop_color });
 
 //     const { startPos, centerPos, endPos, textTargetRight } = getCalloutPositions(circle_outline, circle_color, targetZ, circle_rect);
-//     const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width / 2 });
+//     const offCenterPos = scene.getElementWorldPosition(circle_outline, { anchor: 'start', z: targetZ, offsetX: -circle_rect.width });
 
+//     gsap.set(circle_color, {
+//         x:        -circle_rect.width,
+//         '--bg':   'transparent',
+//         clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+//     });
 //     gsap.set(heading, { x: -heading.offsetWidth });
 
 //     hoop.setPosition(centerPos.x, centerPos.y, centerPos.z);
@@ -1220,19 +1560,31 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //     chevron.setPosition(startPos.x, startPos.y, startPos.z);
 //     chevron.setRotation(0, 0, -90);
 
-//     const rightEdgeOfOutline = circle_rect.width; // in parent coords
-//     const circleColorLeft = -circle_rect.width * 2; // gsap x offset
-//     const clipLeft = ((rightEdgeOfOutline - circleColorLeft) / circle_rect.width);
-
-
-//     gsap.set(circle_color, {
-//         x:        -circle_rect.width,
-//         '--scale' :0,
-//         clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
+//     const blindCount = 8;
+//     const blindRect = circle_color.getBoundingClientRect();
+//     const blindWidth = (blindRect.width) / blindCount * 1.5; // overlap to cover gaps when rotated
+    
+//     // left: calc(${(i / blindCount) * 100}% + ${circle_rect.width}px);
+//     const blindEls = Array.from({ length: blindCount }, (_, i) => {
+//         const el = document.createElement('div');
+//         el.style.cssText = `
+//             position: absolute;
+//             width: ${blindWidth}px;
+//             height: 200%;
+//             background: var(--bg);
+//             left: ${(i / blindCount) * 100}%;
+//             top: -50%;
+//             transform-origin: center center;
+//             transform: translateX(-50%) rotateZ(45deg) scaleX(0);
+//             z-index: -1;
+//         `;
+//         circle_color.appendChild(el);
+//         return { el };
 //     });
 
+
 //     callout_tl
-//         .add(chevron.setAngle(45, { duration: 1 }), 0)
+//         .add(chevron.setAngle(45, { duration: 1, ease:"expo.in" }), 0)
 //         .fromTo(chevron.root.position,
 //             { x: offCenterPos.x, y: offCenterPos.y, z: offCenterPos.z },
 //             { x: endPos.x,       y: endPos.y,       z: endPos.z,       duration: 1, ease: 'power2.in' },
@@ -1246,20 +1598,27 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //             duration: 0.001,
 //             onStart:           () => hoop.releaseChevron(chevron),
 //             onReverseComplete: () => hoop.clipChevron(chevron),
-//         }, 1.0)
+//         }, 0.95)
 
 //         .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 1)
-//         .to(circle_color, { 
-//             '--scale' : 1, duration: 0.25, ease: 'expo.in'
-//         }, 1)
-//         .to(circle_color, { 
+//         .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 1)
+//         .to(circle_color, {  
+//             clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
 //             x: -circle_rect.width / 2, 
-//             // clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`, 
-//             duration: 1, ease: 'none' }, 1)
+//             duration: 1, 
+//             ease: 'none' }, 1)
 
-//         .to(heading, { x: 0 + circle_rect.width / 3 }, 2)
+//         .to(heading, { x: 0 + circle_rect.width / 3 }, 2);
 
-//         .fromTo(copy, {
+//         blindEls.forEach(({ el }, i) => {
+//             callout_tl.fromTo(el,
+//                 { rotateZ: 45, scaleX: 0 },
+//                 { rotateZ: 0, scaleX: 2, duration: 1.2, ease: 'power4.inOut' },
+//                 2 + i * 0.1
+//             );
+//         });
+
+//         callout_tl.fromTo(copy, {
 //             y:-50,
 //             opacity: 0
 //         },{
@@ -1293,6 +1652,29 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //         gsap.set(heading, { x: heading.offsetWidth });
 
 //         hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
+
+//         const colCount = 13;
+//         const colGap = -1; // px gap between columns, 0 for seamless fill
+
+//         const colRect = circle_color.getBoundingClientRect();
+//         const colWidth = (colRect.width - colGap * (colCount - 1)) / colCount;
+
+//         const colEls = Array.from({ length: colCount }, (_, i) => {
+//             const el = document.createElement('div');
+//             const fromAbove = i % 2 === 0; // alternate above/below
+//             el.style.cssText = `
+//                 position: absolute;
+//                 width: ${colWidth}px;
+//                 height: 100%;
+//                 background: var(--bg);
+//                 left: ${i * (colWidth + colGap)}px;
+//                 top: 0;
+//                 transform: translateY(${fromAbove ? '-100%' : '100%'});
+//                 z-index: -1;
+//             `;
+//             circle_color.appendChild(el);
+//             return { el, fromAbove };
+//         });
 
 //         callout_tl
 //             .to(chevron.root.position,{ 
@@ -1351,8 +1733,9 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //                 ease: 'power2.inOut'
 //             }, 4.85)
 
+//             .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 4.15)
 //             .to(circle_color,{ 
-//                 '--bg': color, 
+//                 clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
 //                 x: circle_rect.width / 2, 
 //                 duration: 1, 
 //                 ease: 'none' 
@@ -1360,9 +1743,21 @@ export function calloutAnimation(chevron, scene, containerRef) {
             
 //             .to(heading,{ 
 //                 x: 0 - circle_rect.width / 3 
-//             }, 5)
+//             }, 5);
 
-//             .fromTo(copy, {
+//             colEls.slice().reverse().forEach(({ el, fromAbove }, i) => {
+//                 callout_tl.fromTo(el,
+//                     { 
+//                         // width: colWidth, 
+//                         y: fromAbove ? '-100%' : '100%' },
+//                     { 
+//                         // width: colWidth + colGap, 
+//                         y: '0%', duration: 1.5, ease: 'power3.inOut' },
+//                     4.5 + i * 0.12
+//                 );
+//             });
+
+//             callout_tl.fromTo(copy, {
 //                 y:-50,
 //                 opacity: 0
 //             },{
@@ -1400,12 +1795,37 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //         gsap.set(heading, { x: -heading.offsetWidth });
 
 //         hoop.setPosition(centerPos.x, centerPos.y, in_plane_targetZ);
-
-//         // ── Portal: stamp stencil disc from the start so it's ready ─────────────
-//         // Chevron is NOT clipped yet — only clipped once it enters the ring plane.
-//         // depthTest:false on the disc means it stamps even when the chevron
-//         // is behind it in world space, which is exactly what we need here.
 //         hoop.enablePortal();
+
+//         const circleCount = 15;
+//         const freq = 3; // number of full oscillations
+//         const amplitude = 0.35; // fraction of container height
+
+//         const rect = circle_color.getBoundingClientRect();
+//         const w = rect.width;
+//         const h = rect.height;
+
+//         const circleEls = Array.from({ length: circleCount }, (_, i) => {
+//             const t = i / (circleCount - 1); // 0 → 1 across width
+//             const x = t * 100; // % left
+//             const y = 50 + amplitude * 100 * Math.sin(t * freq * Math.PI * 2); // % top
+
+//             const size = 50 + Math.random() * 150;
+//             const el = document.createElement('div');
+//             el.style.cssText = `
+//                 position: absolute;
+//                 width: ${size}px;
+//                 height: ${size}px;
+//                 border-radius: 50%;
+//                 background: var(--bg);
+//                 left: ${x}%;
+//                 top: ${y}%;
+//                 transform: translate(-50%, -50%) scale(0);
+//                 z-index: -1;
+//             `;
+//             circle_color.appendChild(el);
+//             return { el, dur: 3 + Math.random() * 2 };
+//         });
 
 //         callout_tl
 //             .to(chevron.root.position, {
@@ -1417,28 +1837,40 @@ export function calloutAnimation(chevron, scene, containerRef) {
 
 //             .add(chevron.setAngle(27.5, { duration: 1 }), 6)
 
-//             // ── Sentinel: clip chevron to ring_2 as it crosses the hoop plane ───
-//             // Fires at t=6.35 — chevron is approaching the ring face. From this
-//             // point forward it is only visible inside the disc, giving the
-//             // impression it is swallowed by the portal as it recedes behind the ring.
-//             // onReverseComplete undoes the clip when scrubbing backward.
 //             .to({}, {
 //                 duration: 0.001,
 //                 onStart:           () => hoop.clipChevron(chevron),
 //                 onReverseComplete: () => hoop.releaseChevron(chevron),
 //             }, 6.35)
 
-//             .to(circle_color, { '--bg': color, x: -circle_rect.width / 2, duration: 1, ease: 'none' }, 6)
+//             .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 6)
+//             .to(circle_color, { 
+//                 clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
+//                 x: -circle_rect.width / 2, 
+//                 duration: 1, ease: 'none' }, 6)
 
 //             .to(heading, { x: 0 + circle_rect.width / 3 }, 7)
 
 //             .fromTo(copy, {
-//                 y:-50,
+//                 y: -50,
 //                 opacity: 0
-//             },{
-//                 y:0,
+//             }, {
+//                 y: 0,
 //                 opacity: 1
 //             }, 8)
+
+//         circleEls.forEach(({ el, dur }) => {
+//             callout_tl.fromTo(el,
+//                 { scale: 0, },
+//                 { scale: 3, duration: dur, ease: 'power4.inOut' },
+//                 7.5
+//             );
+//             callout_tl.fromTo(el,
+//                 { x: -150, },
+//                 { x: 0, duration: dur, ease: 'none' },
+//                 7.5
+//             );
+//         });
 
 //     };
 
@@ -1450,8 +1882,6 @@ export function calloutAnimation(chevron, scene, containerRef) {
 //         handlers[index]?.(wrapper);
 //     });
 // }
-
-
 const D2R = (d) => THREE.MathUtils.degToRad(d);
 
 function ChevronDevBox({ chevron, inset = "50px 10px 0 0" }) {

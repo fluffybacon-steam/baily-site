@@ -8,6 +8,8 @@ import AnimatedNav from '@/components/AnimatedNav'
 
 import HeroText from '@/components/HeroText';
 import SplitText from "@/components/SplitText";
+import Scene from "@/components/Scene";
+import { fireColumnAnimation } from '@/components/Scene';
 
 // import OscillatingCircle from '@/components/OscillatingCircle';
 import Callouts from '@/components/Callouts';
@@ -28,6 +30,15 @@ export default function Home() {
   
   return (
     <>
+        <Scene 
+          name="column"
+          inset="0" 
+          position="fixed"
+          width="100vw" 
+          height="100vh" onReady={({ scene }) => {
+            fireColumnAnimation(scene);
+          }} 
+        />
         <HeroText text={'Hohman Digital'}/>
         <Callouts />
         <AnimatedNav />

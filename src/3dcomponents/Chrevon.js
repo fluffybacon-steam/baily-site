@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
+import { roughness } from 'three/tsl';
 
 const D2R = (d) => THREE.MathUtils.degToRad(d);
 
@@ -22,9 +23,11 @@ export class Chevron {
         angle    = 45,
         minAngle = 0,
         maxAngle = 90,
+        visible = true,
         camera   = null,
         mountEl  = null,
     } = {}) {
+        console.log("this", this);
         this.c_height = height;
         this.c_radius = radius;
 
@@ -35,8 +38,11 @@ export class Chevron {
 
         // ── Geometry ─────────────────────────────────────────────────────────
         const geo = new THREE.CapsuleGeometry(radius, height, 10, 20);
-        this.material1 = new THREE.MeshBasicMaterial({ map: createGradientTexture('#00aeef', '#2d388a') });
-        this.material2 = new THREE.MeshBasicMaterial({ map: createGradientTexture('#00aeef', '#2d388a') });
+        const material_parms = { 
+            map: createGradientTexture('#00aeef', '#2d388a'),
+        }
+        this.material1 = new THREE.MeshBasicMaterial(material_parms);
+        this.material2 = new THREE.MeshBasicMaterial(material_parms);
 
         const mesh1 = new THREE.Mesh(geo, this.material1);
         const mesh2 = new THREE.Mesh(geo, this.material2);
@@ -48,6 +54,7 @@ export class Chevron {
         this.arm1 = new THREE.Group();
         this.arm2 = new THREE.Group();
         this.root.add(this.arm1, this.arm2);
+        this.root.visible = visible;
 
         const geoOffset = height / 2;
         mesh1.position.set(0, -geoOffset, 0);

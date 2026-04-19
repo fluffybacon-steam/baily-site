@@ -179,7 +179,7 @@ export class ColumnWorld {
      * @param {object}       [opts]  see DEFAULT_OPTS
      */
     constructor(scene, opts = {}) {
-        // Accept either a raw THREE.Scene or a ChevronScene wrapper
+        // Accept either a raw THREE.Scene or a RenderScene wrapper
         this._scene = scene.scene instanceof THREE.Scene ? scene.scene : scene;
 
         // Store camera + mount element for mouse → world projection

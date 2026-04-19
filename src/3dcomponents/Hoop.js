@@ -4,11 +4,11 @@ import gsap from 'gsap';
 const D2R = (d) => THREE.MathUtils.degToRad(d);
 
 /**
- * A circular hoop (torus) that lives in a ChevronScene.
+ * A circular hoop (torus) that lives in a RenderScene.
  *
  * ─── Pixel ↔ World Conversion ────────────────────────────────────────────────
  * Sizes are expressed as canvas-pixel values at a given world-space Z depth.
- * Pass the camera + mountEl from ChevronScene and the conversion is automatic.
+ * Pass the camera + mountEl from RenderScene and the conversion is automatic.
  * Call setSize(widthPx, heightPx) whenever the hoop needs to match a DOM element.
  *
  * ─── Why not CSS clipPath? ───────────────────────────────────────────────────
@@ -38,7 +38,7 @@ const D2R = (d) => THREE.MathUtils.degToRad(d);
  *     Materials are restored to their defaults (no stencil test).
  *
  * For this to work the WebGLRenderer must be created with { stencil: true }
- * (Three.js defaults to true; ChevronScene enforces it explicitly).
+ * (Three.js defaults to true; RenderScene enforces it explicitly).
  *
  * ─── Hoop-through animation ───────────────────────────────────────────────────
  * For a simple "chevron flies through a hoop" animation you do NOT need portal

@@ -16,11 +16,12 @@ export default () => {
             <div className="max-content" style={{position: 'relative', overflow: 'visible'}}>
                 <Scene 
                 // debug={1} 
+                name="callouts"
                 width="100vw" 
                 height="100%" 
                 inset="0 0 0 0"
-                onReady={({ chevron, scene })  => {
-                    calloutAnimation(chevron, scene, containerRef);
+                onReady={({ scene })  => {
+                    calloutAnimation(scene, containerRef);
                 }} />
                 <div className="callout_wrapper callout_wrapper--1" data-color="#9d4edd" data-color-hoop="#9d4edd">
                     <div className="circle-outline"></div>
@@ -50,7 +51,7 @@ export default () => {
                 <div className="callout_wrapper callout_wrapper--3" data-color="#ba181b" data-color-hoop="#ba181b">
                     <div className="circle-outline"></div>
                     <div className="circle-color" >
-                        <h2>We translate your ideas into every digital language.</h2>
+                        <h2>We translate your ideas into every digital language</h2>
                     </div>
                     <div className='copy-wrapper'>
                         <p>

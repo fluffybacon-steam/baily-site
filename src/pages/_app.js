@@ -6,17 +6,16 @@ import { gsap } from 'gsap';
 import ScrollSmoother from 'gsap/dist/ScrollSmoother';
 import TopologyBackground from '@/3dcomponents/TopologyBackground';
 import Scene from '@/components/Scene';
-import { ChevronSceneContext } from '@/context/ChevronSceneContext';
-import { ColumnWorldControls } from '@/3dcomponents/ColumnWorldControls.jsx';
-import { fireColumnAnimation } from '@/components/Scene.js';
+import { RenderSceneContext } from '@/context/RenderSceneContext';
 gsap.registerPlugin(ScrollSmoother);
+
+import '@/styles/Showcase3D.scss';
 
 export default function App({ Component, pageProps }) {
     const sceneRef   = useRef(null);
     const chevronRef = useRef(null);
-    const [columnWorld, setColumnWorld] = useState(null);
 
-    // ── Receives the live ChevronScene + Chevron once Scene has mounted ───────
+    // ── Receives the live RenderScene + Chevron once Scene has mounted ───────
     // Both refs are populated before any child component can fire a transition,
     // so there is no race condition.
     const handleReady = ({ scene, chevron }) => {
@@ -24,9 +23,8 @@ export default function App({ Component, pageProps }) {
         chevronRef.current = chevron;
 
         // Start invisible — navItemToPageAnimation makes it visible when needed
-        chevron.root.visible = false;
-        if(window.location.pathname === "/"){
-            fireColumnAnimation(scene, setColumnWorld)
+        if(chevronRef.current){
+            chevronRef.current.root.visible = false;
         }
     };
 
@@ -36,7 +34,7 @@ export default function App({ Component, pageProps }) {
     // }, []);
 
     return (
-        <ChevronSceneContext.Provider value={{ sceneRef, chevronRef }}>
+        <RenderSceneContext.Provider value={{ sceneRef, chevronRef }}>
 
             {/*
                 Scene mounts its own canvas div (position:absolute).
@@ -55,6 +53,7 @@ export default function App({ Component, pageProps }) {
             >
                 <Scene
                     // debug={1}
+                    name="page"
                     chevronOpts={{ angle: 0 }}
                     width="100%"
                     height="100%"
@@ -72,8 +71,7 @@ export default function App({ Component, pageProps }) {
                     <Footer />
                 </div>
             </div>
-            {columnWorld && <ColumnWorldControls world={columnWorld} />}
 
-        </ChevronSceneContext.Provider>
+        </RenderSceneContext.Provider>
     );
 }

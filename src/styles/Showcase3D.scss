@@ -1,0 +1,237 @@
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * Showcase3D.scss
+ * Converted to nested SCSS structure.
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.showcase.showcase-3d {
+  --highlight-height: 75px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  grid-template-rows: auto;
+  grid-auto-flow: row;
+  gap:30px;
+  overflow: hidden;
+  align-items: stretch;
+
+  /* ── DEVICES — 3D viewport container ── */
+  .devices {
+    grid-row:1/2;
+    grid-column: 2/3;
+
+    position: relative;
+    width: 100%;
+    height: auto;
+    min-height:400px;
+    margin: 0 auto;  
+    @media (max-width:768px) {
+        // grid-row:2/3;
+        grid-column: 1/3;
+    }
+
+    .scene-wrapper {
+      position: absolute !important;
+      inset: 0;
+      z-index: 0;
+    }
+
+    .orbit-overlay {
+        // display:none;
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    /* SVG highlight rail */
+    .highlights {
+        display:none;
+      position: absolute;
+      top: 0;
+      left: 10%;
+      right: 10%;
+      height: var(--highlight-height);
+      z-index: 2;
+      overflow: visible;
+      pointer-events: none;
+
+      .on-rail {
+        pointer-events: auto;
+        cursor: pointer;
+      }
+    }
+
+    /* Nav arrows (inside viewport) */
+    .nav-arrows {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      z-index: 3;
+    }
+  }
+
+  /* ── NAVIGATION COMPONENTS ── */
+  .nav-arrow {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-primary, #e0e0e0);
+    font-size: 1.5rem;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    transition: all 0.25s;
+    line-height: 1;
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--accent, #00aeef);
+      color: var(--accent, #00aeef);
+      transform: scale(1.08);
+    }
+
+    &:disabled {
+      opacity: 0.25;
+      cursor: default;
+    }
+  }
+
+  .nav-counter {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #888);
+    letter-spacing: 0.08em;
+    min-width: 4ch;
+    text-align: center;
+  }
+
+  /* ── COPY — centered below 3D viewport ── */
+  .copy {
+    grid-row:1/2;
+    grid-column: 1/2;
+    font-size: 1rem;
+    text-align: left;
+    padding: 1em 0;
+    @media (max-width:768px) {
+        grid-column: 1/3;
+        grid-row: 2/3;
+    }
+
+
+    h2 {
+      font-size: 2em;
+      line-height: 0.7;
+      margin: 0.5em 0;
+    }
+
+    .link-out {
+      color: var(--accent, #00aeef);
+      text-decoration: none;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--accent-hover, #33c4ff);
+        text-decoration: underline;
+      }
+    }
+
+    .agency {
+      font-size: 1em;
+
+      svg {
+        display: inline-block;
+        height: 1.25em;
+        padding-left: 0.75ch;
+        vertical-align: bottom;
+      }
+    }
+
+    .brief {
+      font-size: 1.2em;
+      max-width: 500px;
+      text-align: left;
+
+      p {
+        margin: 0 0 0.5em;
+      }
+    }
+  }
+
+  /* ── TILES — full-width grid ── */
+  .tiles {
+    grid-row: span 1;
+    grid-column: 1/3;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-auto-rows: auto;
+    padding: 1em 0;
+    max-width: var(--max-width);
+    gap: 1em;
+
+    @media screen and (max-width: 768px) {
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      padding: 0.5rem;
+    }
+  }
+
+  .tile {
+    --inactive-color: rgba(43, 39, 39, 0.45);
+    --active-color: #00aeef;
+    cursor: pointer;
+    grid-column: span 1;
+    grid-row: span 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: var(--bg-url);
+    background-size: cover;
+    background-position: top;
+    position: relative;
+    isolation: isolate;
+    aspect-ratio: 3 / 1;
+    border: 5px solid var(--inactive-color);
+    transition: border-color 0.3s, transform 0.2s;
+
+    @media screen and (max-width:768px){
+        aspect-ratio: 3/2;
+    }
+
+    &::before {
+      content: '';
+      background: rgba(43, 39, 39, 0.678);
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      z-index: 0;
+      transition: background 0.25s;
+    }
+
+    &:hover::before {
+      background: var(--inactive-color);
+    }
+    
+    &:hover, &.active {
+        
+        border-color: var(--active-color);
+    //   &::before {
+    //     background: rgba(0, 120, 180, 0.35);
+    //   }
+    }
+
+    h3 {
+      color: white;
+      z-index: 1;
+      font-size: 1.5rem;
+      text-align: center;
+      text-wrap-style: balance;
+    }
+  }
+}

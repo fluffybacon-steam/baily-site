@@ -2,12 +2,12 @@ import {useEffect, useState, useRef} from 'react';
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
 import {page_transition} from '@/lib/helper.js';
-import { useChevronScene } from '@/context/ChevronSceneContext';
+import { useRenderScene } from '@/context/RenderSceneContext';
 
 const Contact = () => {
     const [contactMethod, setContactMethod] = useState('email');
     const articleRef = useRef(null);
-        const { sceneRef, chevronRef } = useChevronScene();
+        const { sceneRef, chevronRef } = useRenderScene();
         // const iconRef = useRef(null);
     
         useGSAP(() => {

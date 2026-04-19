@@ -39,14 +39,17 @@ const HeroText = ({ text }) => {
   return (
     <section className="hero-wrapper" ref={heroWrapRef}>
         <Scene 
-        inset="-50% 0 0 0" 
-        width="100vw" height="150%" onReady={({ chevron, scene }) => {
-            fireHeroAnimation(chevron, scene, heroWrapRef);
-        }} />
+            name="hero"
+            inset="-50% 0 0 0" 
+            width="100vw" height="150%" 
+            onReady={({ scene }) => {
+                fireHeroAnimation(scene, heroWrapRef);
+            }} 
+        />
         <div className="max-content">
             <div className={'logo'}>
                 <h1 className="text"><span>hohman</span><span>digital</span></h1>
-                <div className='ball'></div>
+                {/* <div className='ball'></div> */}
                 {/* <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' /> */}
             </div>
             <div ref={headlineRef} className="headline">

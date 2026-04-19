@@ -2,7 +2,8 @@ import {gsap} from 'gsap';
 
 const D2R = (d) => (d * Math.PI) / 180;
 
-export function page_transition(articleRef, { scene, chevron } = {} ) {
+export function page_transition(articleRef, { scene,chevron } = {} ) {
+    if(!articleRef) return
     // const preventScroll = (e) => e.preventDefault();
     // window.addEventListener('wheel',     preventScroll, { passive: false });
     // window.addEventListener('touchmove', preventScroll, { passive: false });
@@ -21,8 +22,7 @@ export function page_transition(articleRef, { scene, chevron } = {} ) {
     });
 
     // Chevron is sitting at p2, z:90 — animate it out first
-    console.log("chevron", chevron);
-    // console.log('chevron.root.visible', chevron.root.visible);
+    // const chevron = scene.getObjectByProperty('nav_arrrow');
     if (chevron) {
         const targetZ = chevron.getZForPixelHeight(heading.offsetHeight);
 

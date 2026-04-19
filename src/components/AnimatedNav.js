@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useEffect, useRef } from 'react';
-import { useChevronScene } from '@/context/ChevronSceneContext';
+import { useRenderScene } from '@/context/RenderSceneContext';
 import {page_transition} from '@/lib/helper.js';
 
 const D2R = (d) => (d * Math.PI) / 180;
@@ -107,7 +107,7 @@ const NavItem = (props) => {
 
     // Scene and chevron come from the global context set up in _app.js —
     // this is the exact same instance the devbox controls.
-    const { sceneRef, chevronRef } = useChevronScene();
+    const { sceneRef } = useRenderScene();
 
     const handleClick = (event) => {
         event.preventDefault();
@@ -116,17 +116,13 @@ const NavItem = (props) => {
 
     useEffect(()=>{
       const scene   = sceneRef?.current;
-      const chevron = chevronRef?.current;
-
-      if (!scene || !chevron) {
+      if (!scene) {
           console.warn('navItemToPageAnimation: scene or chevron not ready');
           return;
       }
 
-      chevron.snapAngle(0);
-      chevron.root.visible = false;
-
-    }, [sceneRef, chevronRef])
+    }, [sceneRef])
+    // }, [sceneRef, chevronRef])
 
     /**
      * @param {number}  number
@@ -141,12 +137,13 @@ const NavItem = (props) => {
         const animated_nav = document.querySelector('.animated-nav');
  
         const scene   = sceneRef?.current;
-        const chevron = chevronRef?.current;
  
-        if (!scene || !chevron) {
+        if (!scene ) {
             console.warn('navItemToPageAnimation: scene or chevron not ready');
             return;
         }
+
+        const chevron = scene.addChevron('nav_arrow',{angle:0, visible: false});
  
         target.classList.add('active');
         const otherLinks = [...animated_nav.querySelectorAll('a')].filter(el => el !== target);
@@ -278,7 +275,7 @@ const NavItem = (props) => {
             onComplete: ()=>{
                 page_transition(document.querySelector('article'), {
                 scene:   sceneRef?.current,
-                chevron: chevronRef?.current,
+                chevron: chevron,
             })
             }
         });

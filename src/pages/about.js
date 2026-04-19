@@ -3,14 +3,18 @@ import Link from 'next/link';
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
 import {page_transition} from '@/lib/helper.js';
-import { useChevronScene } from '@/context/ChevronSceneContext';
+import { useRenderScene } from '@/context/RenderSceneContext';
+import OfficeSection from '@/components/Office';
+import ScrollTrigger from "gsap/dist/ScrollTrigger";
+import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
+gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 
 console.log('page_transition',page_transition);
 
 const AboutUs = () => {
     const articleRef = useRef(null);
-    const { sceneRef, chevronRef } = useChevronScene();
+    // const { sceneRef, chevronRef } = useRenderScene();
     // const iconRef = useRef(null);
 
     useGSAP(() => {
@@ -30,6 +34,16 @@ const AboutUs = () => {
         <article ref={articleRef}>
             <h1>About Us</h1>
             <hr />
+            <OfficeSection />
+            <div>
+                <h3>About</h3>
+                <h1>Your End-to-End Digital Partner</h1>
+                <p>
+                    We are dedicated to your growth and committed to delivering excellence on every project. 
+                    Our team turns complex technical challenges into seamless solutions that simplify your 
+                    operations and empower your business.
+                </p>
+            </div>
             <figure className='right' data-fade-stagger="0">
                 <div className='mask-animation'>
                     <img class='stencil' width="800" height="946" alt='picture of the founder and his dog' src='/sketch_grey_image.png' />
@@ -70,7 +84,7 @@ const sections = [
     {
         id: 'curious-coder',
         title: 'The Curious Coder',
-        year: '~2008',
+        year: '2008',
         content: [
             `I first began writing code around the age of 11. This first consisted of simple Batch scripts, motivated by a desire to understand computers at their core. Naturally, the scope of these home projects grew and a skill developed. By the time I graduated Highschool, I was developing full Windows applications in C# and designing basic websites in HTML & CSS. My parents assumed I would pursue Comp Sci in College, but my growing curiosity for anatomy took me in a different direction.`,
         ],
@@ -104,32 +118,69 @@ const sections = [
     },
 ];
  
+// Ensure these are registered at the top of your file or app entry
+
 function FounderTimeline() {
-    const [activeIndex, setActiveIndex] = useState(null);
-    const [direction, setDirection] = useState(0);
-    const [animKey, setAnimKey] = useState(0);
- 
-    const handleClick = (i) => {
-        if (i === activeIndex) return;
-        const dir = activeIndex !== null ? Math.sign(i - activeIndex) : 1;
-        setDirection(dir);
-        setActiveIndex(i);
-        setAnimKey((k) => k + 1);
+    const timelineRef = useRef(null);
+    const lineFillRef = useRef(null);
+    const sectionRefs = useRef([]);
+    const stRef = useRef(null);
+    const [activeIndex, setActiveIndex] = useState(0);
+
+    useGSAP(() => {
+        const wrap = timelineRef.current.querySelector('.tl-wrap');
+        const snapPoints = sections.map((_, i) => i / (sections.length - 1));
+
+        gsap.set(lineFillRef.current, { scaleY: 0, transformOrigin: 'top center' });
+        const clamp = gsap.utils.clamp(0, 1);
+        stRef.current = ScrollTrigger.create({
+            trigger: wrap,
+            start: 'top center',
+            end: 'bottom center',
+            scrub: 2,
+            // snap: {
+            //     snapTo: snapPoints,
+            //     duration: { min: 0.2, max: 0.5 },
+            //     ease: 'power1.inOut',
+            // },
+            onUpdate: (self) => {
+                gsap.set(lineFillRef.current, { 
+                 scaleY: clamp(self.progress * 1.25) 
+                });
+
+                const idx = Math.round(self.progress * (sections.length - 1));
+                setActiveIndex((prev) => (prev !== idx ? idx : prev));
+            },
+        });
+    }, { scope: timelineRef, dependencies: [] });
+
+    const handleClick = (index) => {
+        const st = stRef.current;
+        if (!st) return;
+
+        const progress = index / (sections.length - 1);
+        const scrollPos = st.start + progress * (st.end - st.start);
+
+        gsap.to(window, {
+            scrollTo: scrollPos,
+            duration: 0.8,
+            ease: 'power2.inOut',
+        });
     };
- 
-    const enterAnim = direction >= 0 ? 'slideInUp' : 'slideInDown';
- 
+
     return (
-        <div className='timeline' data-fade-stagger="1">
+        <div className="timeline" data-fade-stagger="1" ref={timelineRef}>
             <h2>Meet the Founder</h2>
 
             <div className="tl-wrap">
                 <div className="tl-rail">
-                    <div className="tl-line" />
+                    <div className="tl-line">
+                        <div className="tl-line-fill" ref={lineFillRef} />
+                    </div>
                     {sections.map((s, i) => (
                         <button
                             key={s.id}
-                            className={`tl-node${i === activeIndex ? ' active' : ''}`}
+                            className={`tl-node${i <= activeIndex ? ' active' : ''}`}
                             style={{ top: `${(i / (sections.length - 1)) * 100}%` }}
                             onClick={() => handleClick(i)}
                         >
@@ -141,43 +192,22 @@ function FounderTimeline() {
                         </button>
                     ))}
                 </div>
- 
+
                 <div className="tl-content">
-                    {activeIndex !== null ? (
-                        <div className="tl-section" key={animKey} style={{ animationName: enterAnim }}>
-                            <h3>{sections[activeIndex].title}</h3>
-                            {sections[activeIndex].content.map((p, j) => (
+                    {sections.map((s, i) => (
+                        <div
+                            className={`tl-section${i === activeIndex ? ' active' : ''}`}
+                            key={s.id} // was s.i — bug fix
+                            ref={(el) => (sectionRefs.current[i] = el)}
+                        >
+                            <h3>{s.title}</h3>
+                            {s.content.map((p, j) => (
                                 <p key={j}>{p}</p>
                             ))}
                         </div>
-                    ) : (
-                        <p className="tl-prompt">← Select a milestone to explore</p>
-                    )}
+                    ))}
                 </div>
             </div>
         </div>
     );
 }
-
-// function page_transition(articleRef, title_icon_offset = 25 ){
-//     const coverup = document.querySelector('#coverup');
-//     const transition_icon = coverup.querySelector('.icon-wrapper');
-//     if(transition_icon){
-//         // transition_icon?.remove();
-//         const heading = articleRef.current.querySelector("h1");
-//         const article_elements = Array.from(heading.parentNode.children).filter(
-//             (el) => el !== heading
-//         );
-//         console.log("setup timeline");
-//         const page_in_tl = gsap.timeline({
-//             paused:true
-//         })
-
-//         //set stage
-//         page_in_tl.set('#coverup', {
-//                 opacity: 0
-//             }, 0);
-
-//         return page_in_tl;
-//     }
-// }
