@@ -5,7 +5,7 @@ import Scene, { calloutAnimation } from '@/components/Scene';
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default () => {
+export default function Callouts () {
     const containerRef = useRef(null);
 
     const chevronRef = useRef(null);
@@ -13,7 +13,7 @@ export default () => {
 
     return (
         <section className="callouts_container" ref={containerRef}>
-            <div className="max-content" style={{position: 'relative', overflow: 'visible'}}>
+            <div className="max-content" style={{position: 'relative', overflow: 'hidden'}}>
                 <Scene 
                 // debug={1} 
                 name="callouts"
@@ -23,7 +23,7 @@ export default () => {
                 onReady={({ scene })  => {
                     calloutAnimation(scene, containerRef);
                 }} />
-                <div className="callout_wrapper callout_wrapper--1" data-color="#9d4edd" data-color-hoop="#9d4edd">
+                <div className="callout_wrapper callout_wrapper--1" data-color="#FF715B" data-color-hoop="#FF715B">
                     <div className="circle-outline"></div>
                     <div className="circle-color">
                         {/* <h2>Stop apologizing for your link and start flaunting it.</h2> */}
@@ -32,23 +32,25 @@ export default () => {
                     <div className='copy-wrapper'>
                         <p>Anyone can take a photo, but there comes a time when you need a photographer. A professional with the vision, equipment, and experience to capture the moment.
                         </p>
-                        <p>We don't do "templates." We engineer custom digital storefronts built around your specific features and services. When we're finished, your peers and clients will make no mistake about who built your site: an expert who understands that your online presence is synonymous with reputation.
+                        <p>We don&apos;t do &quot;templates.&quot; We engineer custom digital storefronts built around your specific features and services. When we&apos;re finished, your peers and clients will make no mistake about who built your site: an expert who understands that your online presence is synonymous with reputation.
                         </p>
                     </div>
                 </div>
 
-                <div className="callout_wrapper callout_wrapper--2" data-color="#9ef01a" data-color-hoop="#9ef01a">
+                <div className="callout_wrapper callout_wrapper--2" data-color="#F9CB40" data-color-hoop="#F9CB40">
                     <div className="circle-outline"  ></div>
                     <div className="circle-color" >
                         <h2>Stop hoping for sales Start engineering for them</h2>
                     </div>
                     <div className='copy-wrapper'>
-                        <p>Social media makes buying ads easy, but without data, you aren't marketing: you're gambling. We specialize in data-driven campaigns that turn views into value.</p>
-                        <p>Are you in an industry we haven't conquered yet? <b>You get 50% off your discovery invoice.</b> We get the experience; you get the results.</p>
+                        <p>Social media makes buying ads easy, but without data, you aren&apos;t marketing: you&apos;re gambling. We specialize in data-driven campaigns that turn views into value.</p>
+                        <p>Are you in an industry we haven&apos;t conquered yet?</p>
+                        <p><b>Get 50% off your discovery invoice.</b></p>
+                        <p>We get the experience; you get the results.</p>
                     </div>
                 </div>
 
-                <div className="callout_wrapper callout_wrapper--3" data-color="#ba181b" data-color-hoop="#ba181b">
+                <div className="callout_wrapper callout_wrapper--3" data-color="#BCED09" data-color-hoop="#BCED09">
                     <div className="circle-outline"></div>
                     <div className="circle-color" >
                         <h2>We translate your ideas into every digital language</h2>
@@ -62,18 +64,6 @@ export default () => {
                         </p>
                     </div>
                 </div>
-
-                {/* <div className="callout_wrapper" data-color="#ba181b" data-color-hoop="#ba181b">
-                    <div className="circle-outline"></div>
-                    <div className="circle-color" >
-                        <h2>Tech fails. We don't</h2>
-                    </div>
-                    <div className='copy-wrapper'>
-                        <p>There is nothing more frustrating than a "simple" tech issue stalling a sale or halting a deadline.
-                        </p>
-                        <p>We patch problems before they happen.</p>
-                    </div>
-                </div> */}
 
             </div>
         </section>

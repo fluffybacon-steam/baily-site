@@ -11,12 +11,39 @@
   grid-template-rows: auto;
   grid-auto-flow: row;
   gap:30px;
-  overflow: hidden;
+  // overflow: hidden;
   align-items: stretch;
+
+  /* SVG highlight rail */
+  .highlights_wrapper{
+    grid-row:1/2;
+    grid-column: 1/2;
+    position: relative;
+    height: var(--highlight-height);
+  }
+  .highlights {
+      // display:none;
+    position: absolute;
+    top: 0;
+    left:0;
+    // left: 10%;
+    // right: 10%;
+    height: var(--highlight-height);
+    z-index: 2;
+    overflow: visible;
+    pointer-events: none;
+    width:auto;
+
+    .on-rail {
+      pointer-events: auto;
+      cursor: pointer;
+      color:var(--black_white_toggle);
+    }
+  }
 
   /* ── DEVICES — 3D viewport container ── */
   .devices {
-    grid-row:1/2;
+    grid-row:1/3;
     grid-column: 2/3;
 
     position: relative;
@@ -44,24 +71,6 @@
       touch-action: none;
     }
 
-    /* SVG highlight rail */
-    .highlights {
-        display:none;
-      position: absolute;
-      top: 0;
-      left: 10%;
-      right: 10%;
-      height: var(--highlight-height);
-      z-index: 2;
-      overflow: visible;
-      pointer-events: none;
-
-      .on-rail {
-        pointer-events: auto;
-        cursor: pointer;
-      }
-    }
-
     /* Nav arrows (inside viewport) */
     .nav-arrows {
       position: absolute;
@@ -77,10 +86,10 @@
 
   /* ── NAVIGATION COMPONENTS ── */
   .nav-arrow {
-    background: rgba(255, 255, 255, 0.06);
+    background: hsl(from var(--black_white_toggle) h s l / 60%);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text-primary, #e0e0e0);
+    border: 2px solid hsl(from var(--black_white_toggle) h s l / 12%);
+    color: var(--white_black_toggle);
     font-size: 1.5rem;
     width: 44px;
     height: 44px;
@@ -92,9 +101,8 @@
     line-height: 1;
 
     &:hover:not(:disabled) {
-      background: rgba(255, 255, 255, 0.12);
-      border-color: var(--accent, #00aeef);
-      color: var(--accent, #00aeef);
+      border-color: var(--brand-light-blue);
+      // color: var(--accent, #00aeef);
       transform: scale(1.08);
     }
 
@@ -107,19 +115,23 @@
   .nav-counter {
     font-family: monospace;
     font-size: 0.85rem;
-    color: var(--text-secondary, #888);
+    color: var(--white_black_toggle);
     letter-spacing: 0.08em;
+    padding:1em;
+    border-radius: 100%;
     min-width: 4ch;
     text-align: center;
+    background: hsl(from var(--black_white_toggle) h s l / 60%);
+    
   }
 
   /* ── COPY — centered below 3D viewport ── */
   .copy {
-    grid-row:1/2;
+    grid-row:2/3;
     grid-column: 1/2;
     font-size: 1rem;
     text-align: left;
-    padding: 1em 0;
+    // padding: 1em 0;
     @media (max-width:768px) {
         grid-column: 1/3;
         grid-row: 2/3;
@@ -127,35 +139,54 @@
 
 
     h2 {
-      font-size: 2em;
-      line-height: 0.7;
-      margin: 0.5em 0;
+
+      font-size: 2.5em;
+      line-height: 1;
+      margin: 0 0 0.5em 0;
     }
 
-    .link-out {
-      color: var(--accent, #00aeef);
-      text-decoration: none;
-      transition: color 0.2s;
-
-      &:hover {
-        color: var(--accent-hover, #33c4ff);
-        text-decoration: underline;
-      }
+    .button-pill{
+      font-size:1rem;
+      // background: var(--button-background);
+      // color: var(--accent, #00aeef);
+      // color: var(--accent-hover, #00aeef);
     }
+    // .link-out {
+    //   color: var(--accent, #00aeef);
+    //   text-decoration: none;
+    //   transition: color 0.2s;
+
+    //   &:hover {
+    //     color: var(--accent-hover, #33c4ff);
+    //     text-decoration: underline;
+    //   }
+    // }
 
     .agency {
-      font-size: 1em;
-
+      font-size: 0.75em;
+      margin: 1em 0;
+      padding: 10px 10px 5px 10px;
+      width: fit-content;
+      color:var(--body-font-color);
+      background: var(--bg-color);
+      color:white;
+      &:empty{
+        padding:0px;
+      }
+      span{
+        vertical-align: bottom;
+        line-height: 1;
+      }
       svg {
         display: inline-block;
-        height: 1.25em;
+        height: 1em;
         padding-left: 0.75ch;
-        vertical-align: bottom;
+        vertical-align: top;
       }
     }
 
     .brief {
-      font-size: 1.2em;
+      font-size: 1em;
       max-width: 500px;
       text-align: left;
 

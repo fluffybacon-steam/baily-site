@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ServiceList from "@/components/ServiceList";
-import {page_transition} from '@/lib/helper.js';
+import {page_transition_last} from '@/lib/helper.js';
 import { useRenderScene } from '@/context/RenderSceneContext';
 
 
@@ -19,8 +19,7 @@ const Services = () => {
     
     return(
         <article ref={articleRef}>
-            <h1>Our Services</h1>
-            <hr />
+            <h1 class='transition-target'>Our Services</h1>
             <ServiceList />
         </article>
     )   

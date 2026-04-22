@@ -1,6 +1,6 @@
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
-import { page_transition } from "@/lib/helper";
+import { page_transition_last } from "@/lib/helper";
 import Showcase from "@/components/Showcase.js";
 import { useRenderScene } from '@/context/RenderSceneContext';
 
@@ -20,8 +20,7 @@ const Portfolio = () => {
 
     return(
         <article ref={articleRef} >
-            <h1>Portfolio</h1>
-            <hr />
+            <h1 className="transition-target">Portfolio</h1>
             <Showcase3D />
             {/* <Showcase /> */}
         </article>

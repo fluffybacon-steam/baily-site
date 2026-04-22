@@ -29,7 +29,7 @@ const rose = Red_Rose({
 export default function Home() {
   
   return (
-    <>
+    <article>
         <Scene 
           name="column"
           inset="0" 
@@ -38,11 +38,11 @@ export default function Home() {
           height="100vh" onReady={({ scene }) => {
             fireColumnAnimation(scene);
           }} 
-        />
+          />
         <HeroText text={'Hohman Digital'}/>
         <Callouts />
         <AnimatedNav />
-    </>
+    </article>
   )
 
 }

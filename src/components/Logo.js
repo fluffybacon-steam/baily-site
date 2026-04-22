@@ -76,4 +76,6 @@ const Logo = React.forwardRef((props, ref) => {
   })
 
 
+Logo.displayName = "Logo";
+
 export default Logo;

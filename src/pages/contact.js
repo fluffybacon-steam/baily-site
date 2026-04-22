@@ -1,7 +1,7 @@
 import {useEffect, useState, useRef} from 'react';
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
-import {page_transition} from '@/lib/helper.js';
+import {page_transition_last} from '@/lib/helper.js';
 import { useRenderScene } from '@/context/RenderSceneContext';
 
 const Contact = () => {
@@ -12,26 +12,16 @@ const Contact = () => {
     
         useGSAP(() => {
             console.log("useGSAP running!");
-             if (articleRef.current) {
-                const page_in_tl = page_transition(articleRef, {
-                    scene:   sceneRef?.current,
-                    chevron: chevronRef?.current,
-                });
-                if (page_in_tl) {
-                    page_in_tl.duration(2).play();
-                }
-            }
     
         }, { dependencies: [] })
 
     return(
-        <article ref={articleRef} className="loading">
-            <h1>Contact</h1>
-            <hr />
-            <p>Got a project, question, or site you'd like us to check out? Let’s talk.</p>
+        <article ref={articleRef}>
+            <h1 class='transition-target'>Contact</h1>
+            <div data-fade-stagger="0">
+            <p>Got a project, question, or site you&apos;d like us to check out? Let&apos;s talk.</p>
             <form
-                action="https://formspree.io/f/xrblznpz"
-                method="POST"
+                action="https://submit-form.com/F0DFoMg5W"
             >
                 <div className="flex-container">
                     <div className="input-wrapper name">
@@ -82,6 +72,7 @@ const Contact = () => {
                 <button type="submit" >Submit</button>
             
             </form>
+            </div>
         </article>
     )
 }

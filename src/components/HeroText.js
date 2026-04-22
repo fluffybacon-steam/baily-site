@@ -17,33 +17,21 @@ const HeroText = ({ text }) => {
   const headlineRef = useRef(null);
   const arrowDownRef = useRef(null);
 
-//   const textTop = text || 'Hohman Digital';
-
-  useGSAP(() => {
-    //  console.log('svgRef',svgRef.current);
-    if (heroWrapRef.current && headlineRef.current) {
-
-        const headline_animation = craftHeadlineAnimation(headlineRef.current);
-
-        headline_animation.then(() => {
-            console.log(heroWrapRef.current.dataset);
-            heroWrapRef.current.dataset.animated = 1;
-        });
-
-        headline_animation.duration(2).play();   
-
-        
-    }
-  }, { scope: svgRef, dependencies: [text] });
-
   return (
     <section className="hero-wrapper" ref={heroWrapRef}>
         <Scene 
             name="hero"
             inset="-50% 0 0 0" 
-            width="100vw" height="150%" 
+            width="100%" height="150%" 
             onReady={({ scene }) => {
-                fireHeroAnimation(scene, heroWrapRef);
+                // ── Prevent scroll until hero animation finishes ─────────────────────────
+                document.body.style.overflow = 'hidden';
+                const tl = fireHeroAnimation(scene, heroWrapRef);
+                const headline_animation = craftHeadlineAnimation(headlineRef.current);
+                tl.then(()=>{
+                     document.body.style.overflow = '';
+                    headline_animation.duration(2).play()
+                })
             }} 
         />
         <div className="max-content">
@@ -52,7 +40,7 @@ const HeroText = ({ text }) => {
                 {/* <div className='ball'></div> */}
                 {/* <Logo ref={svgRef} arrowcolor='red' gradstart='white' gradstop='green' /> */}
             </div>
-            <div ref={headlineRef} className="headline">
+            <div ref={headlineRef} className="headline" style={{opacity: 0}}>
                 Building 
                 <div className='spinner'>
                     <span>memorable</span>

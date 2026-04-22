@@ -2,15 +2,17 @@ import {useEffect, useState, useRef} from 'react';
 import Link from 'next/link';
 import {gsap} from 'gsap';
 import { useGSAP } from '@gsap/react';
-import {page_transition} from '@/lib/helper.js';
-import { useRenderScene } from '@/context/RenderSceneContext';
-import OfficeSection from '@/components/Office';
+import {page_transition_last} from '@/lib/helper.js';
+// import { useRenderScene } from '@/context/RenderSceneContext';
+// import OfficeSection from '@/components/Office';
 import ScrollTrigger from "gsap/dist/ScrollTrigger";
 import ScrollToPlugin from "gsap/dist/ScrollToPlugin";
+import Scene from "@/components/Scene";
+import { fireHologramAnimation } from '@/components/Scene';
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 
 
-console.log('page_transition',page_transition);
+console.log('page_transition_last',page_transition_last);
 
 const AboutUs = () => {
     const articleRef = useRef(null);
@@ -19,59 +21,117 @@ const AboutUs = () => {
 
     useGSAP(() => {
         console.log("useGSAP running!");
-        if (articleRef.current && !document.body.classList.contains("loading")) {
-            articleRef.current.querySelector(".mask-animation").classList.add("play");
-        } else {
-            setTimeout(()=>{
-                console.log("set timeout ran");
-                articleRef.current.querySelector(".mask-animation").classList.add("play");
-            },750);
+        if (articleRef.current) {
+            gsap.fromTo('.mask-animation .stencil', 
+                { 
+                    // Force the starting position
+                    webkitMaskPosition: "0% 0%", 
+                    maskPosition: "0% 0%" 
+                },
+                {
+                    scrollTrigger: {
+                        trigger: '.mask-animation',
+                        toggleActions: 'play none none none',
+                        start: "center 50%",
+                        // markers: true, // Debug tip: uncomment this to see the start line
+                    },
+                    // Animate both for cross-browser compatibility
+                    webkitMaskPosition: "100% 0%",
+                    maskPosition: "100% 0%",
+                    
+                    ease: "steps(9)", // Ensure your sprite has 10 frames if using 9 steps
+                    duration: 1,
+                }
+            );
         }
-
-    }, { dependencies: [] })
+    }, { scope: articleRef, dependencies: [] })
 
     return(
         <article ref={articleRef}>
-            <h1>About Us</h1>
-            <hr />
-            <OfficeSection />
-            <div>
-                <h3>About</h3>
-                <h1>Your End-to-End Digital Partner</h1>
-                <p>
-                    We are dedicated to your growth and committed to delivering excellence on every project. 
-                    Our team turns complex technical challenges into seamless solutions that simplify your 
-                    operations and empower your business.
-                </p>
-            </div>
-            <figure className='right' data-fade-stagger="0">
-                <div className='mask-animation'>
-                    <img class='stencil' width="800" height="946" alt='picture of the founder and his dog' src='/sketch_grey_image.png' />
-                    <img class='color' width="800" height="946" alt='picture of the founder and his dog' src='https://pub-260e094998904f71aded9ac9db8b350c.r2.dev/president%26co.webp' />
+            <h2 class='transition-target'>About Us</h2>
+            <div className="about-hero" data-fade-stagger="0">
+                <div class='hero-content'>
+                    <h1>Your End-to-End Digital Partner</h1>
+                    <p>
+                        We are dedicated to your growth and committed to delivering excellence on every project. 
+                        Our team turns complex technical challenges into seamless solutions that simplify your 
+                        operations and empower your business.
+                    </p>
                 </div>
-                <figcaption>President of Hohman Digital, Baily Hohman, sitting with his co-president, Buzz Boy</figcaption>
-            </figure>
-            <div className='content-block' data-fade-stagger="0">
-                <h2>Who We Are</h2>
-                <p>
-                    Hi! I'm <strong>Baily</strong>, founder and president of <strong>Hohman Digital LLC</strong>. 
-                    My job is bring my clients' brands & ideas to the digital world.
-                    Whether its launching a new business or reinventing an existing one, 
-                    we make sure its not only seen... Its remembered.
-                </p>
-                <p>
-                    We specialize in:
-                </p>
-                <ul className='custom-icons'>
-                    <li className='web'>Frontend & Backend Website Development</li>
-                    <li className='data'>Data-driven <abbr title='Pay-Per-Click'>PPC</abbr> campaigns and <abbr title="Search Engine Optimization">SEO </abbr> strategies</li>
-                    <li className='ai'>Emerging <abbr title='Generative Engine Optimization'>GEO</abbr> techniques</li>
-                    <li className='app'>Android & iOS Applications</li>
-                </ul>
-                <p>
-                    We're also growing our software development capabilities and are currently training our own AI model.
-                    For the larger projects that come my way, I leverage my collaborative network of freelancers to deliver at scale.
-                </p>
+                <div class='hero-image' data-fade-stagger="0.5">
+                    <Scene 
+                        name="mobius"
+                        inset="-25% -25%" 
+                        position="absolute"
+                        width="150%" 
+                        height="150%" onReady={({ scene }) => {
+                            fireHologramAnimation(scene);
+                        }} 
+                        />
+                </div>
+            </div>
+            <div className='split-block' >
+                <div class='copy copy--shrink' data-fade-stagger="0.5">
+                    <h2>Who We Are</h2>
+                    <p>
+                        Founded by Baily Hohman, Hohman Digital LLC is more than just a development shop. 
+                        Our mission is to help small businesses establish and grow their digital space. 
+                        We make sure your idea or product isn&apos;t just seen... it&apos;s remembered.
+                    </p>
+                    <p>
+                        Check out some of our work below
+                    </p>
+                    <Link class='button-pill' href='/portfolio'>Portfolio</Link>
+                </div>
+                <div className='specialities' data-fade-stagger="0.75">
+                    <div class='card web'>
+                        <h3>Websites</h3>
+                        <p>Frontend & Backend System built for scale and permanence.</p>
+                    </div>
+                    <div class='card growth'>
+                        <h3>Growth Strategy</h3>
+                        <p>Data-driven PPC, SEO, and emerging GEO techniques.</p>
+                    </div>
+                    <div class='card native'>
+                        <h3>Native Applications</h3>
+                        <p>Performant iOS and Android apps that users love.</p>
+                    </div>
+                     <div class='card ai'>
+                        <h3>AI Integration</h3>
+                        <p>Streamline processes with the latest technology.</p>
+                    </div>
+                </div>
+            </div>
+            <div className='split-block' data-fade-stagger="1">
+                <figure >
+                    <div className='mask-animation'>
+                        <img class='stencil' width="800" height="946" alt='picture of the founder and his dog' src='/sketch_grey_image.png' />
+                        <img class='color' width="800" height="946" alt='picture of the founder and his dog' src='https://pub-260e094998904f71aded9ac9db8b350c.r2.dev/president%26co.webp' />
+                    </div>
+                    <figcaption>President of Hohman Digital, Baily Hohman, sitting with his co-president, Buzz Boy</figcaption>
+                </figure>
+                <div className="copy copy--grow" data-fade-stagger="0">
+                    <h2>Meet the Founder</h2>
+                    <p>
+                        Hi! I&apos;m <strong>Baily</strong>, founder and president of <strong>Hohman Digital LLC</strong>. 
+                        My job is bring my clients&apos; brands & ideas to the digital world.
+                        Whether its launching a new business or reinventing an existing one, 
+                        I will be there to help.
+                    </p>
+                    <p>
+                        I specialize in:
+                    </p>
+                    <ul className='custom-icons'>
+                        <li className='web'>Frontend & Backend Website Development</li>
+                        <li className='data'>Data-driven <abbr title='Pay-Per-Click'>PPC</abbr> campaigns and <abbr title="Search Engine Optimization">SEO </abbr> strategies</li>
+                        <li className='ai'>Emerging <abbr title='Generative Engine Optimization'>GEO</abbr> techniques</li>
+                        <li className='app'>Android & iOS Applications</li>
+                    </ul>
+                    <p>
+                        We&apos;re also growing our software development capabilities and are currently training our own AI model.
+                        For the larger projects that come my way, I leverage my collaborative network of freelancers to deliver at scale.
+                    </p>
+                </div>
             </div>
             <FounderTimeline />
         </article>
@@ -170,7 +230,7 @@ function FounderTimeline() {
 
     return (
         <div className="timeline" data-fade-stagger="1" ref={timelineRef}>
-            <h2>Meet the Founder</h2>
+            <h2>Our History</h2>
 
             <div className="tl-wrap">
                 <div className="tl-rail">

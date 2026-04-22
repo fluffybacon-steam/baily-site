@@ -29,11 +29,17 @@ const nextConfig = {
       test: /\.svg$/,
       oneOf: [
         {
-          issuer: /\.[jt]sx?$/, // If the SVG is imported in a JS/TS file
-          use: ['@svgr/webpack', 'url-loader'],
+          // ?url suffix → returns data URL (for use in <image href={} />)
+          resourceQuery: /url/,
+          use: ['url-loader'],
         },
         {
-          type: 'asset/resource', // If imported in a CSS/Sass file
+          // everything else → returns React component
+          issuer: /\.[jt]sx?$/,
+          use: ['@svgr/webpack'],
+        },
+        {
+          type: 'asset/resource',
         },
       ],
     });

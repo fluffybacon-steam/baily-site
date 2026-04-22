@@ -3,10 +3,11 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import { useGSAP } from '@gsap/react';
 import MotionPathPlugin from 'gsap/dist/MotionPathPlugin';
 gsap.registerPlugin(MotionPathPlugin);
 import Scene from '@/components/Scene';      // your existing Scene wrapper
-import { ReactComponent as Donovan } from '@/icons/donovan.svg';
+import DonovanIcon from '@/icons/donovan.svg';
 import { hideTooltip, showTooltip } from '@/lib/helper';
 
 // ─── Sketchfab GLTF loader (uncomment when you have models) ─────────────────
@@ -14,15 +15,18 @@ import { hideTooltip, showTooltip } from '@/lib/helper';
 // import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader';
 
 // ─── Icon imports for the highlight rail ─────────────────────────────────────
-import nextjs    from '@/icons/nextjs.svg';
-import salsify   from '@/icons/salsify.svg';
-import restApi   from '@/icons/rest-api.svg';
-import python    from '@/icons/python.svg';
-import greensock from '@/icons/gsap.svg';
-import html5     from '@/icons/html5.svg';
-import syndigo   from '@/icons/syndigo.svg';
-import shopify   from '@/icons/shopify.svg';
-import { useGSAP } from '@gsap/react';
+import nextjs    from '@/icons/nextjs.svg?url';
+import salsify   from '@/icons/salsify.svg?url';
+import restApi   from '@/icons/rest-api.svg?url';
+import python    from '@/icons/python.svg?url';
+import greensock from '@/icons/gsap.svg?url';
+import html5     from '@/icons/html5.svg?url';
+import syndigo   from '@/icons/syndigo.svg?url';
+import shopify   from '@/icons/shopify.svg?url';
+
+import RestApiIcon from '@/icons/rest-api.svg';
+import Html5Icon   from '@/icons/html5.svg';
+import NextjsIcon  from '@/icons/nextjs.svg';
 
 const D2R = (d) => THREE.MathUtils.degToRad(d);
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -142,6 +146,8 @@ const project_list = [
  *  CONFIGURATION — tweak these to taste
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
+const PHONE_BODY_W = 3.2, PHONE_BODY_H = 6.4, bodyD = 0.1;
+
 const MONITOR_BODY_W = 9.6;
 const MONITOR_BODY_H = 5.8;
 const MONITOR_STAND_NECK_H = 0.8;
@@ -176,7 +182,7 @@ const CONFIG = {
     orbit: {
         target:        new THREE.Vector3(1.5, 0, 0),   // focus point between devices
         damping:       0.08,            // smoothing factor (0 = frozen, 1 = instant)
-        sensitivity:   0.004,           // radians per pixel of drag
+        sensitivity:   0.002,           // radians per pixel of drag
         minPolar:      Math.PI * 0.25,  // clamp vertical: don't go under the floor
         maxPolar:      Math.PI * 0.65,  // clamp vertical: don't flip over the top
         minAzimuth:   -Math.PI * 0.35,  // clamp horizontal: how far left
@@ -310,14 +316,13 @@ function createPhoneModel() {
         side: THREE.FrontSide,
     });
 
-    const bodyW = 3.2, bodyH = 6.4, bodyD = 0.1;
     const bezelW = 0.15;
-    const screenW = bodyW - bezelW * 2;
-    const screenH = bodyH - bezelW * 2 - 0.15;
+    const screenW = PHONE_BODY_W - bezelW * 2;
+    const screenH = PHONE_BODY_H - bezelW * 2 - 0.15;
     const cornerRadius = 0.35;
 
     // 1. Main Body
-    const bodyShape = createRoundedRectShape(bodyW, bodyH, cornerRadius);
+    const bodyShape = createRoundedRectShape(PHONE_BODY_W, PHONE_BODY_H, cornerRadius);
     const bodyGeo = new THREE.ExtrudeGeometry(bodyShape, {
         depth: bodyD,
         bevelEnabled: true,
@@ -343,7 +348,7 @@ function createPhoneModel() {
     group.add(screen);
 
     // 3. The Additional Frame (Body shape with a Screen hole)
-    const frameShape = createRoundedRectShape(bodyW, bodyH, cornerRadius);
+    const frameShape = createRoundedRectShape(PHONE_BODY_W, PHONE_BODY_H, cornerRadius);
     const screenRadius = cornerRadius * 0.8; // Rounded inner corners
     const holePath = createRoundedRectShape(screenW, screenH, screenRadius);
     
@@ -360,16 +365,6 @@ function createPhoneModel() {
     frame.position.set(0, 0, frontZ + 0.01); // Layered on top
     frame.name = 'phone_frame';
     group.add(frame);
-
-    // 4. Scaling (Baking into geometry as per original code)
-    const scaleFactor = 0.60;
-    bodyGeo.scale(scaleFactor, scaleFactor, scaleFactor);
-    screenGeo.scale(scaleFactor, scaleFactor, scaleFactor);
-    frameGeo.scale(scaleFactor, scaleFactor, scaleFactor);
-
-    // Note: Re-align positions because geometry scaling shifts the bounding box
-    screen.position.multiplyScalar(scaleFactor);
-    frame.position.multiplyScalar(scaleFactor);
 
     return { group, screenMesh: screen, screenMaterial: screenMat };
 }
@@ -388,7 +383,6 @@ function createRoundedRectShape(w, h, r) {
     shape.quadraticCurveTo(-hw, -hh, -hw + r, -hh);
     return shape;
 }
-
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  *  TEXTURE CACHE
@@ -496,20 +490,7 @@ export default function Showcase3D() {
         sceneRef.current = renderScene;
         const threeScene = renderScene.scene;
         const camera     = renderScene.camera;
-
-        // ── Camera — fit monitor to container height ─────────────────────
         const containerEl = document.querySelector('.showcase-3d .devices');
-        const fov = camera.fov;
-
-        const calcFittedZ = () => {
-            if (!containerEl?.offsetHeight) return CONFIG.cameraZFallback;
-            const fovRad = THREE.MathUtils.degToRad(fov);
-            return (MONITOR_TOTAL_H / (2 * Math.tan(fovRad / 2))) * CONFIG.cameraPadding;
-        };
-
-        let fittedZ = calcFittedZ();
-        camera.position.set(0, 0, fittedZ);
-        camera.lookAt(0, 0, 0);
 
         // ── Lighting ────────────────────────────────────────────────────
         setupLighting(threeScene);
@@ -518,48 +499,72 @@ export default function Showcase3D() {
         const monitor = createMonitorModel();
         const phone   = createPhoneModel();
 
-        const tl_phone_flip = gsap.timeline();
+        monitor.group.rotation.copy(CONFIG.monitor.rotation);
+        
+        threeScene.add(monitor.group);
+        threeScene.add(phone.group);
+        
+        devicesRef.current = { monitor, phone };
+        
+        const layoutDevices = () => {
+            const monitorZ = renderScene.getZForWorldWidth(MONITOR_BODY_W, Math.max(400, containerEl.offsetWidth / 1.25));
+            const monitorXYZ = renderScene.getElementWorldPosition(containerEl, { anchor: "top-right", z: monitorZ });
+            monitor.group.position.set(
+                monitorXYZ.x - MONITOR_BODY_W / 2,
+                monitorXYZ.y - MONITOR_BODY_H / 2,
+                monitorZ
+            );
 
-        tl_phone_flip.set(monitor.group.position, {
-            y:CONFIG.monitor.position.y,
-            z:CONFIG.monitor.position.z,
-            x:CONFIG.monitor.position.x
-        })
-        // .fromTo(monitor.group.position,{
-        //     x:CONFIG.monitor.position.x + 10
-        // },{
-        //     x:CONFIG.monitor.position.x,
-        //     duration:1,
-        //     ease:'power1.out'
-        // }, 0);
+            const phoneZ = monitorZ + 1;
+            const phoneXYZ = renderScene.getElementWorldPosition(containerEl, { anchor: "bottom-left", z: phoneZ });
+            const phoneRatio = 0.175;
+            const phoneScale = (MONITOR_BODY_W * phoneRatio) / PHONE_BODY_W;
+            phone.group.scale.setScalar(phoneScale);
+            phone.group.position.set(
+                phoneXYZ.x + (PHONE_BODY_W * phoneScale) / 2,
+                phoneXYZ.y + (PHONE_BODY_H * phoneScale) / 2,
+                monitorZ + 1
+            );
+
+            const offset_x = Math.abs(monitor.group.position.x - phone.group.position.x) / 6;
+            const offset_y = Math.abs(monitor.group.position.y - phone.group.position.y) / 4;
+            phone.group.position.x += offset_x / 2;
+            monitor.group.position.x -= offset_x / 2;
+            phone.group.position.y += offset_y;
+
+            return monitorZ;
+        };
+        const monitorZ = layoutDevices();
+
+        const tl_phone_flip = gsap.timeline();
 
         //pick up phone
         tl_phone_flip.fromTo(phone.group.position,{
-            x:-1.25,
-            y: -3,
-            z: -0.5,
+            x: phone.group.position.x + 1.25,
+            y: phone.group.position.y - 3,
+            // z: phone.group.position.z - 0.5,
         },{
-            x:CONFIG.phone.position.x,
-            z:CONFIG.phone.position.z,
-            y:0,
+            x:phone.group.position.x,
+            // z:phone.group.position.z,
+            y:phone.group.position.y,
             duration:2,
             ease:'power1.inOut'
         }, 0)
 
         //flip phone
         .fromTo(phone.group.position,{
-            z: -0.5,
+            z: phone.group.position.z - 5,
         },{
-            z:CONFIG.phone.position.z,
+            z: phone.group.position.z,
             duration:2,
             ease:'back.out(1.7)'
         }, 0)
 
         //display phone
         .fromTo(phone.group.rotation,{
-            x:1.56,
-            y:0,
-            z:-0.5,
+            x: 1.56,
+            y: 0,
+            z: -0.5,
         },{
             x:CONFIG.phone.rotation.x,
             y:CONFIG.phone.rotation.y,
@@ -568,19 +573,7 @@ export default function Showcase3D() {
             ease:'power1.inOut'
         }, 0);
 
-        tl_phone_flip.duration(1);
-
-        // monitor.group.position.copy(CONFIG.monitor.position);
-        monitor.group.rotation.copy(CONFIG.monitor.rotation);
-
-        // phone.group.position.copy(CONFIG.phone.position);
-        // phone.group.rotation.copy(CONFIG.phone.rotation);
-
-        threeScene.add(monitor.group);
-        threeScene.add(phone.group);
-
-        devicesRef.current = { monitor, phone };
-
+        // tl_phone_flip.duration(1);
         // ── Load initial textures ───────────────────────────────────────
         const tc = texCacheRef.current;
         const firstProject = project_list[0];
@@ -608,23 +601,7 @@ export default function Showcase3D() {
             project_list[1]?.mobile,
         ]);
 
-        // ── Idle floating animation (skipped when floatFrequency === 0) ─
-        // let idleTween = null;
-        // if (CONFIG.floatFrequency > 0) {
-        //     const floatProxy = { t: 0 };
-        //     idleTween = gsap.to(floatProxy, {
-        //         t: Math.PI * 2,
-        //         repeat: -1,
-        //         duration: 1 / CONFIG.floatFrequency,
-        //         ease: 'none',
-        //         onUpdate: () => {
-        //             const y = Math.sin(floatProxy.t) * CONFIG.floatAmplitude;
-        //             monitor.group.position.y = CONFIG.monitor.position.y + y;
-        //             phone.group.position.y   = CONFIG.phone.position.y + y * 0.7;
-        //         },
-        //     });
-        //     idleTweenRef.current = idleTween;
-        // }
+        // return;
 
         // ══════════════════════════════════════════════════════════════════
         //  ORBIT CAMERA — spherical coordinates around a focus target
@@ -638,7 +615,14 @@ export default function Showcase3D() {
         // ══════════════════════════════════════════════════════════════════
 
         const orbitCfg  = CONFIG.orbit;
-        let restRadius  = fittedZ;          // ← FIX #1: was CONFIG.cameraZ (undefined)
+        orbitCfg.target.set(0, 0, monitorZ);
+        let restRadius = camera.position.z - monitorZ; 
+        // orbitCfg.target.set(
+        //     (monitor.group.position.x + phone.group.position.x) / 2,
+        //     (monitor.group.position.y + phone.group.position.y) / 2,
+        //     monitorZ
+        // );
+        // let restRadius  = camera.position.z - orbitCfg.target.z;       
         const restTheta = 0;
         const restPhi   = Math.PI / 2;
 
@@ -730,11 +714,10 @@ export default function Showcase3D() {
 
         // ── Resize handler — re-fit camera when container changes ───────
         const onResize = () => {
-            const newZ = calcFittedZ();
-            if (Math.abs(newZ - fittedZ) < 0.01) return;
-            fittedZ    = newZ;
-            restRadius = newZ;
-            orbit.radius = newZ;
+            const newMonitorZ = layoutDevices();
+            orbitCfg.target.set(0, 0, newMonitorZ);
+            restRadius = camera.position.z - newMonitorZ;
+            orbit.radius = restRadius;
         };
         window.addEventListener('resize', onResize);
 
@@ -754,11 +737,11 @@ export default function Showcase3D() {
 
     }, {dependencies: []})
 
-    useEffect(() => {
-        return () => {
-            sceneRef.current?.__showcaseCleanup?.();
-        };
-    }, []);
+    // useEffect(() => {
+    //     return () => {
+    //         sceneRef.current?.__showcaseCleanup?.();
+    //     };
+    // }, []);
 
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -775,10 +758,9 @@ export default function Showcase3D() {
         const dur = CONFIG.transitionDuration ;
 
         const tl = gsap.timeline({
-            onComplete: () => {
+            onStart: () => {
                 setActiveIndex(newIndex);
-                setTransitioning(false);
-
+                
                 tc.preload([
                     project_list[newIndex - 1]?.desktop,
                     project_list[newIndex - 1]?.mobile,
@@ -786,11 +768,14 @@ export default function Showcase3D() {
                     project_list[newIndex + 1]?.mobile,
                 ]);
             },
+            onComplete:()=>{
+                setTransitioning(false);
+            }
         });
 
         // Slight scale dip
         // tl.to(monitor.group.scale, { x: 0.5, y: 0.5, z: 0.5, duration: dur * 0.4, ease: 'power2.in' }, 0);
-        tl.to(phone.group.scale,   { x: 0.95, y: 0.95, z: 0.95, duration: dur * 0.4, ease: 'power2.in' }, 0);
+        tl.to(phone.group.scale,   { x: phone.group.scale.x * 0.95, y: phone.group.scale.y * 0.95, z: phone.group.scale.z * 0.95, duration: dur * 0.4, ease: 'power2.in' }, 0);
         
         // tl.to(monitor.group.rotation, { y: D2R(180), duration: dur * 0.4, ease: 'power2.in' }, 0);
         tl.to(phone.group.rotation,   { y: goBack ? D2R(-180) : D2R(180), duration: dur * 0.4, ease: 'power2.in' }, 0);
@@ -843,7 +828,7 @@ export default function Showcase3D() {
 
 
         // tl.to(monitor.group.scale, { x: 1, y: 1, z: 1, duration: dur * 0.6, ease: 'power2.out' }, dur * 0.4);
-        tl.to(phone.group.scale,   { x: 1, y: 1, z: 1, duration: dur * 0.6, ease: 'power2.out' }, dur * 0.4);
+        tl.to(phone.group.scale,   { x: phone.group.scale.x, y: phone.group.scale.y, z: phone.group.scale.z, duration: dur * 0.6, ease: 'power2.out' }, dur * 0.4);
 
     }, [activeIndex, isTransitioning]);
 
@@ -954,15 +939,15 @@ export default function Showcase3D() {
     //  RENDER
     // ─────────────────────────────────────────────────────────────────────────
     return (
-        <div className="showcase showcase-3d">
+        <div className="showcase showcase-3d" >
 
-            <div className="devices">
+            <div className="devices" data-fade-stagger="0">
 
                 <Scene
                     onReady={handleSceneReady}
-                    inset="0 0 0 -25%"
+                    inset="-25% 0 0 -25%"
                     width="150%"
-                    height="100%"
+                    height="150%"
                     position="absolute"
                     name="showcase-scene"
                 />
@@ -972,25 +957,6 @@ export default function Showcase3D() {
                     className="orbit-overlay"
                 />
 
-                <svg className="highlights" viewBox="0 0 40 10" ref={svgRef} preserveAspectRatio="meet">
-                    <path fill="transparent" stroke="transparent" strokeWidth="1px" id="highlight_path" d="M0,5 L40,5" />
-                    <image data-tooltip="REST API"                  className="on-rail rest-api"      width={5}    height={5}    href={restApi} />
-                    <image data-tooltip="Salsify API"               className="on-rail salsify"       width={4.25} height={4.25} href={salsify} />
-                    <image data-tooltip="GreenSock Animation Platform" className="on-rail greensock"   width={7}    height={5}    href={greensock} />
-                    <image data-tooltip="WordPress"                 className="on-rail wordpress"     width={5}    height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg" />
-                    <image data-tooltip="React"                     className="on-rail react"         width={5}    height={5}    href="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" />
-                    <image data-tooltip="PHP"                       className="on-rail php"           width={6.5}  height={5}    href="https://upload.wikimedia.org/wikipedia/commons/2/27/PHP-logo.svg" />
-                    <image data-tooltip="Next.js"                   className="on-rail nextjs"        width={5}    height={5}    href={nextjs} />
-                    <image data-tooltip="TypeScript"                className="on-rail typescript"    width={4.5}  height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/4/4c/Typescript_logo_2020.svg" />
-                    <image data-tooltip="Python"                    className="on-rail python"        width={5}    height={5}    href={python} />
-                    <image data-tooltip="HTML5"                     className="on-rail html5"         width={5}    height={5}    href={html5} />
-                    <image data-tooltip="Shopify"                   className="on-rail shopify"       width={9}    height={5}    href={shopify} />
-                    <image data-tooltip="Syndigo API"               className="on-rail syndigo"       width={5}    height={5}    href={syndigo} />
-                    <image data-tooltip="CSS3"                      className="on-rail css"           width={5}    height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/a/ab/Official_CSS_Logo.svg" />
-                    <image data-tooltip="WooCommerce"               className="on-rail woo"           width={5}    height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/2/2a/WooCommerce_logo.svg" />
-                    <image data-tooltip="Google OAuth"              className="on-rail google-auth"   width={5}    height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/3/3a/GDevs.svg" />
-                    <image data-tooltip="Google Sheets API"         className="on-rail google-sheets" width={5}    height={4.5}  href="https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" />
-                </svg>
 
                 <div className="nav-arrows">
                     <button
@@ -1001,9 +967,9 @@ export default function Showcase3D() {
                     >
                         ‹
                     </button>
-                    <span className="nav-counter">
+                    {/* <span className="nav-counter">
                         {activeIndex + 1} / {project_list.length}
-                    </span>
+                    </span> */}
                     <button
                         className="nav-arrow next"
                         disabled={activeIndex === project_list.length - 1 || isTransitioning}
@@ -1015,19 +981,50 @@ export default function Showcase3D() {
                 </div>
 
             </div>
+            
+            <div class='highlights_wrapper' data-fade-stagger="0.5">
+                <svg className="highlights" viewBox="0 0 50 10" ref={svgRef} preserveAspectRatio="meet">
+                    <path fill="transparent" stroke="transparent" strokeWidth="1px" id="highlight_path" d="M0,5 L50,5" />
+                    {/* <image data-tooltip="REST API"                  className="on-rail rest-api"      width={8}    height={8}    href={restApi} /> */}
+                    <image data-tooltip="Salsify API"               className="on-rail salsify"       width={7.25} height={7.25} href={salsify} />
+                    <image data-tooltip="GreenSock Animation Platform" className="on-rail greensock"   width={10}    height={8}    href={greensock} />
+                    <image data-tooltip="WordPress"                 className="on-rail wordpress"     width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/9/98/WordPress_blue_logo.svg" />
+                    <image data-tooltip="React"                     className="on-rail react"         width={8}    height={8}    href="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" />
+                    <image data-tooltip="PHP"                       className="on-rail php"           width={9.5}  height={8}    href="https://upload.wikimedia.org/wikipedia/commons/2/27/PHP-logo.svg" />
+                    {/* <image data-tooltip="Next.js"                   className="on-rail nextjs"        width={8}    height={8}    href={nextjs} /> */}
+                    <image data-tooltip="TypeScript"                className="on-rail typescript"    width={7.5}  height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/4/4c/Typescript_logo_2020.svg" />
+                    <image data-tooltip="Python"                    className="on-rail python"        width={8}    height={8}    href={python} />
+                    {/* <image data-tooltip="HTML5"                     className="on-rail html5"         width={8}    height={8}    href={html5} /> */}
+                    <image data-tooltip="Shopify"                   className="on-rail shopify"       width={9}    height={8}    href={shopify} />
+                    <image data-tooltip="Syndigo API"               className="on-rail syndigo"       width={8}    height={8}    href={syndigo} />
+                    <image data-tooltip="CSS3"                      className="on-rail css"           width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/a/ab/Official_CSS_Logo.svg" />
+                    <image data-tooltip="WooCommerce"               className="on-rail woo"           width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/5/51/WooCommerce_logo_%282015%29.svg" />
+                    <image data-tooltip="Google OAuth"              className="on-rail google-auth"   width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/3/3a/GDevs.svg" />
+                    <image data-tooltip="Google Sheets API"         className="on-rail google-sheets" width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/3/30/Google_Sheets_logo_%282014-2020%29.svg" />
+                    <g data-tooltip="REST API" className="on-rail rest-api">
+                        <RestApiIcon width={8} height={8} />
+                    </g>
+                    <g data-tooltip="HTML5" className="on-rail html5">
+                        <Html5Icon width={8} height={8} />
+                    </g>
+                    <g data-tooltip="Next.js" className="on-rail nextjs">
+                        <NextjsIcon width={8} height={8} />
+                    </g>
+                </svg>
+            </div>
 
             {activeProject && (
-                <div className="copy" key={activeProject.id}>
+                <div className="copy" key={activeProject.id} data-fade-stagger="0.5">
                     <h2>{activeProject.id}</h2>
-                    <GetAgencyDisclaimer agency={activeProject.agency} />
                     <div className="brief" dangerouslySetInnerHTML={{ __html: activeProject.copy }} />
+                    <GetAgencyDisclaimer agency={activeProject.agency} />
                     {activeProject.url && (
-                        <a className="link-out" href={activeProject.url}>Visit Link</a>
+                        <a className="button-pill button-pill--medium button-pill--color" href={activeProject.url}>Visit Link</a>
                     )}
                 </div>
             )}
 
-            <div className="tiles">
+            <div className="tiles" data-fade-stagger="0.75">
                 {project_list.map((project, index) => {
                     const thumb = project.desktop || project.mobile;
                     return (
@@ -1054,9 +1051,9 @@ const GetAgencyDisclaimer = ({ agency }) => {
     switch (agency) {
         case 'donovan':
             return (
-                <div className="agency">
+                <div className="agency" style={{'--bg-color': '#d54f1f'}}>
                     <span>Made in partnership with</span>
-                    <a href="https://donovanadv.com"><Donovan /></a>
+                    <a href="https://donovanadv.com"><DonovanIcon /></a>
                 </div>
             );
         default:

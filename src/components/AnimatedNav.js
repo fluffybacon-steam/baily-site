@@ -4,7 +4,8 @@ import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { useEffect, useRef } from 'react';
 import { useRenderScene } from '@/context/RenderSceneContext';
-import {page_transition} from '@/lib/helper.js';
+import {page_transition_last} from '@/lib/helper.js';
+import {calculate_path} from '@/lib/helper.js';
 
 const D2R = (d) => (d * Math.PI) / 180;
 
@@ -20,16 +21,17 @@ export default function AnimatedNav() {
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: nav,
-                    pin: true,
-                    start: 'top 25%',
-                    end: `bottom 25%`,
+                    // pin: true,
+                    start: 'top 50%',
+                    end: `bottom 50%`,
                     scrub: 2,
-                    pinSpacing: true,
-                    snap: {
-                        snapTo: [0, 0.7, 1], // adjust 0.8 to whatever normalized position the "gap" label lands at
-                        duration: 0.5,
-                        ease: 'power1.inOut',
-                    },
+                    // pinSpacing: true,
+                    markers:1,
+                    // snap: {
+                    //     snapTo: [0, 0.7, 1], // adjust 0.8 to whatever normalized position the "gap" label lands at
+                    //     duration: 0.5,
+                    //     ease: 'power1.inOut',
+                    // },
                     onRefresh: () => {
                         const pinSpacer = nav.closest('.gsap-pin-spacer');
                         if (pinSpacer) pinSpacer.style.overflow = 'visible';
@@ -38,7 +40,7 @@ export default function AnimatedNav() {
             });
             animateNav(tl, nav, navLinks);
         }
-    }, { dependencies: [navRef] });
+    }, { scope: navRef, dependencies: [navRef] });
 
     return (
         <div className='animated-nav' ref={navRef}>
@@ -109,10 +111,10 @@ const NavItem = (props) => {
     // this is the exact same instance the devbox controls.
     const { sceneRef } = useRenderScene();
 
-    const handleClick = (event) => {
-        event.preventDefault();
-        navItemToPageAnimation(props.number, props.url, props.flyMidpoint ?? null);
-    };
+    // const handleClick = (event) => {
+    //     event.preventDefault();
+    //     navItemToPageAnimation(props.number, props.url, props.flyMidpoint ?? null);
+    // };
 
     useEffect(()=>{
       const scene   = sceneRef?.current;
@@ -134,6 +136,7 @@ const NavItem = (props) => {
         const target       = document.querySelector(`a[data-num="${number}"]`);
         const main         = document.querySelector('main');
         const masthead     = document.querySelector('#masthead');
+        const footer     = document.querySelector('#colophon');
         const animated_nav = document.querySelector('.animated-nav');
  
         const scene   = sceneRef?.current;
@@ -143,31 +146,17 @@ const NavItem = (props) => {
             return;
         }
 
-        const chevron = scene.addChevron('nav_arrow',{angle:0, visible: false});
+        let chevron = scene._chevrons.get('nav_arrow');
+        if(chevron){
+            chevron.dispose();
+        }
+        chevron = scene.addChevron('nav_arrow',{angle:0, visible: false});
  
         target.classList.add('active');
         const otherLinks = [...animated_nav.querySelectorAll('a')].filter(el => el !== target);
         const paddingPx  = parseFloat(getComputedStyle(target).getPropertyValue('--padding') || '0');
  
         let p0, p1, p2;
-
-        const dirZ = (from, to) => Math.atan2(to.y - from.y, to.x - from.x) - Math.PI / 2;
-
-      // Quadratic bezier interpolation between two world points via a control point
-      const quadBezier = (p0, ctrl, p1, t) => ({
-          x: (1-t)**2 * p0.x  +  2*(1-t)*t * ctrl.x  +  t**2 * p1.x,
-          y: (1-t)**2 * p0.y  +  2*(1-t)*t * ctrl.y  +  t**2 * p1.y,
-          z: (1-t)**2 * p0.z  +  2*(1-t)*t * ctrl.z  +  t**2 * p1.z,
-      });
-
-      // Perpendicular control point offset from the midpoint of a segment
-      // arcAmount: world-unit bulge. Positive = left of travel direction.
-      const quadBezierTangent = (p0, ctrl, p2, t) => {
-          const dx = 2*(1-t)*(ctrl.x - p0.x) + 2*t*(p2.x - ctrl.x);
-          const dy = 2*(1-t)*(ctrl.y - p0.y) + 2*t*(p2.y - ctrl.y);
-          const dz = 2*(1-t)*(ctrl.z - p0.z) + 2*t*(p2.z - ctrl.z);
-          return { x: dx, y: dy, z: dz };
-      };
  
         const tl = gsap.timeline({});
  
@@ -182,7 +171,7 @@ const NavItem = (props) => {
           padding:  0,
           duration: 0.4,
           ease:     'power1.in',
-          onComplete: ()=>{
+          onComplete: () => {
               chevron.root.visible = true;
               chevron.root.rotation.y = D2R(120);
               target.style.opacity = 0;
@@ -195,97 +184,103 @@ const NavItem = (props) => {
             rotate: () => (Math.random() * 30) - 15,
             duration: 0.4,
         }, 0)
+
+        // tl.add(()=>{
+        //     window.scrollTo(0,0)
+        //     // document.querySelector('#page').style.visibility = 'hidden';
+        // }, 0.4)
+        //psuedo scrollUp 
+        tl.to(footer, {
+            y: footer.offsetHeight
+        }, 0.4);
  
         const mainRect     = main?.getBoundingClientRect()     ?? { left: 0 };
         const mastheadRect = masthead?.getBoundingClientRect() ?? { left: 0 };
 
         const spawnZ = chevron.getZForPixelHeight(collapseH);
-        const spawnMidZ = chevron.getZForPixelHeight(collapseH/3);
+        // const spawnMidZ = chevron.getZForPixelHeight(collapseH/3.5);
         
         p0 = { ...scene.getElementWorldPosition(target, { anchor: 'center', z: spawnZ, offsetY: -(target.offsetHeight - collapseH)/2    }) };
         p1 = scene.getElementWorldPosition(masthead, {
-          anchor:  'bottom-center',
-          z:       spawnMidZ,
-          offsetY: mastheadRect.height * Math.random(),
-          offsetX: mastheadRect.width/2 * Math.random()
-        });
-        p2 = scene.getElementWorldPosition(masthead, {
-          anchor:  'bottom-left',
+          anchor:  'right-bottom',
           z:       spawnZ,
-          offsetX: mainRect.left - mastheadRect.left,
+          offsetY: masthead.offsetHeight,
         });
+        // p1.x = p1.x * 2;
+        p2 = scene.getElementWorldPosition(masthead, {
+            anchor:  'center-bottom',
+            z:       spawnZ,
+            offsetY: masthead.offsetHeight,
+        });
+        console.log(p0.y,p1.y,p2.y ,'diff',(p2.y - p0.y));
+        p1.y = (p2.y - p0.y) > p0.y ? (p2.y - p0.y) : p1.y - 1;
+        // scene.addOrb('test',{center:p0, radius: 1, color:'green'});
+        // scene.addOrb('test',{center:p1, radius: 1, color:'white'});
+        // scene.addOrb('test',{center:p2, radius: 1, color:'purple'});
  
 
         tl.addLabel('start-flight', 0.4);
 
+        // page_transition_first(router, url, tl, scene, chevron, p0, p1, p2);
+
         tl.add(chevron.setAngle(45, { duration: 0.4, ease: 'power3.inOut' }), 'start-flight');
         
+        tl.add(
+            gsap.to("#page > article > *", {
+                scale: 0.5,
+                y:100,
+                opacity: 0,
+                duration: 0.5
+            })
+        , 'start-flight');
+
         tl.to(chevron.root.position, { 
           x: p0.x, y: p0.y, z: p0.z, ease: 'none',  duration: 0
         }, 'start-flight');
 
-
-        const tan0  = quadBezierTangent(p0, p1, p2, 0);
-        const xyLen0 = Math.sqrt(tan0.x**2 + tan0.y**2);
-        const initZ  = Math.atan2(tan0.y, tan0.x) - Math.PI / 2;
-        const initX  = -Math.atan2(tan0.z, xyLen0);
-
-        tl.to(chevron.root.rotation, { x: initX, y: 0, z: initZ, ease:'none', duration: 0.1}, 'start-flight');
+        // tl.to(chevron.root.rotation, { x: initX, y: 0, z: initZ, ease:'none', duration: 0.1}, 'start-flight');
         
-        const PROXY_DURATION       = 3;    
-        const finalRotationLeadTime = 0.5;
+        const path_duration = 3;    
+        const lead_time = path_duration/2;
+        // const lead_time = 0.1;
 
-        const shortestAngle = (from, to) => {
-            let delta = (to - from) % (Math.PI * 2);
-            if (delta >  Math.PI) delta -= Math.PI * 2;
-            if (delta < -Math.PI) delta += Math.PI * 2;
-            return from + delta;
-        };
+        calculate_path(p0, p1, p2, chevron, tl, path_duration, lead_time, 0.5);
 
-        const proxy = { t: 0 };
-
-        tl.to(proxy, {
-            t: 1,
-            duration: PROXY_DURATION,
-            ease: 'power2.inOut',
-            // onStart: ()=>{
-            //     document.body.classList.add("loading");
-            //     document.body.classList.add("transitioning");
-            //     router.push(url);
-            // },
-            onUpdate() {
-                const pos   = quadBezier(p0, p1, p2, proxy.t);
-                const tan   = quadBezierTangent(p0, p1, p2, proxy.t);
-                const xyLen = Math.sqrt(tan.x**2 + tan.y**2);
-
-                Object.assign(chevron.root.position, pos);
-
-                const tangentZ = Math.atan2(tan.y, tan.x) - Math.PI / 2;
-                const tangentX = -Math.atan2(tan.z, xyLen);
-
-                // How far into the lead window are we? 0 = tangent only, 1 = final only
-                const timeRemaining = (1 - proxy.t) * PROXY_DURATION;
-                const blend = finalRotationLeadTime > 0
-                    ? Math.max(0, 1 - timeRemaining / finalRotationLeadTime)
-                    : 0;
-
-                chevron.root.rotation.x = tangentX + (shortestAngle(tangentX, D2R(0))  - tangentX) * blend;
-                chevron.root.rotation.z = tangentZ + (shortestAngle(tangentZ, D2R(90)) - tangentZ) * blend;
-            },
-            onComplete: ()=>{
-                page_transition(document.querySelector('article'), {
-                scene:   sceneRef?.current,
-                chevron: chevron,
-            })
-            }
-        });
         tl.add(()=>{
             document.body.classList.add("loading");
             document.body.classList.add("transitioning");
-            router.push(url);
-        },`<+=${PROXY_DURATION/2}`);
 
-        tl.duration(1.25);
+            const handleRouteComplete = () => {
+                router.events.off('routeChangeComplete', handleRouteComplete);
+                console.log("handleRounteComplete");
+                const article = document.querySelector('article');
+                page_transition_last(article, {
+                    scene:   sceneRef?.current,
+                    chevron: chevron,
+                });
+            };
+
+            router.events.on('routeChangeComplete', handleRouteComplete);
+            router.push(url);
+        });
+        
+        // calculate_path(p0, p1, p2, chevron, tl, path_duration, lead_time, 0.1);
+
+        // tl.add(()=>{
+        //     console.log("called page_transition_last", document.querySelector('article'));
+        //     page_transition_last(document.querySelector('article'), {
+        //         scene:   sceneRef?.current,
+        //         chevron: chevron,
+        //     })
+        // })
+        // tl.add(()=>{
+        //     document.body.classList.add("loading");
+        //     document.body.classList.add("transitioning");
+        //     router.push(url);
+        // },`<+=${PROXY_DURATION/2}`);
+
+        tl.duration(1);
+        // tl.duration(10);
  
         return tl;
     }
@@ -295,7 +290,10 @@ const NavItem = (props) => {
             href={props.url}
             data-num={props.number}
             style={{ gridArea: props.grid_area }}
-            onClick={handleClick}
+            onNavigate={(e)=>{
+                e.preventDefault();
+                navItemToPageAnimation(props.number, props.url, props.flyMidpoint ?? null);
+            }}
         >
             <h2>{props.title}</h2>
             <div className='icon-wrapper'>{props.icon}</div>
