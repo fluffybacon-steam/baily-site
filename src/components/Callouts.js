@@ -3,6 +3,10 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Scene, { calloutAnimation } from '@/components/Scene';
 
+import DesignIcon from "/src/icons/sparkles.svg";
+import SalesIcon from "/src/icons/pricegobur.svg";
+import IdeaIcon from "/src/icons/lightbulb.svg";
+
 gsap.registerPlugin(ScrollTrigger);
 
 export default function Callouts () {
@@ -23,8 +27,10 @@ export default function Callouts () {
                 onReady={({ scene })  => {
                     calloutAnimation(scene, containerRef);
                 }} />
-                <div className="callout_wrapper callout_wrapper--1" data-color="#FF715B" data-color-hoop="#FF715B">
-                    <div className="circle-outline"></div>
+                <div className="callout_wrapper callout_wrapper--1" style={{'--bg': 'var(--callout-1-color)'}}>
+                    <div className="circle-outline" >
+                        <DesignIcon viewBox="-5 -10 84.361511 80.703392" preserveAspectRatio="xMidYMid meet"/>
+                    </div>
                     <div className="circle-color">
                         {/* <h2>Stop apologizing for your link and start flaunting it.</h2> */}
                         <h2>Build instant credibility with a world-class design</h2>
@@ -37,8 +43,10 @@ export default function Callouts () {
                     </div>
                 </div>
 
-                <div className="callout_wrapper callout_wrapper--2" data-color="#F9CB40" data-color-hoop="#F9CB40">
-                    <div className="circle-outline"  ></div>
+                <div className="callout_wrapper callout_wrapper--2" style={{'--bg': 'var(--callout-2-color)'}}>
+                    <div className="circle-outline" >
+                        <SalesIcon viewBox="0 0 62.830002 38.830002" preserveAspectRatio="xMidYMid meet"/>
+                    </div>
                     <div className="circle-color" >
                         <h2>Stop hoping for sales Start engineering for them</h2>
                     </div>
@@ -50,8 +58,10 @@ export default function Callouts () {
                     </div>
                 </div>
 
-                <div className="callout_wrapper callout_wrapper--3" data-color="#BCED09" data-color-hoop="#BCED09">
-                    <div className="circle-outline"></div>
+                <div className="callout_wrapper callout_wrapper--3" style={{'--bg': 'var(--callout-3-color)'}}>
+                    <div className="circle-outline">
+                        <IdeaIcon viewBox="-5 -10 90.125 98.941" preserveAspectRatio="xMidYMid meet"/>
+                    </div>
                     <div className="circle-color" >
                         <h2>We translate your ideas into every digital language</h2>
                     </div>

@@ -28,7 +28,8 @@ export class RenderScene {
         this._mountEl  = mountEl;
 
         this.scene = new THREE.Scene();
-        this.scene.name = n;
+        // this.scene.name = n;
+        this.name = n;
         this.scene.background = null;
 
         this.camera = new THREE.PerspectiveCamera(100, w / h, 0.1, 2000);
@@ -64,9 +65,9 @@ export class RenderScene {
         this._resizeObserver.observe(mountEl);
 
         if(typeof window.scenes != 'undefined'){
-            window.scenes.push(this.scene);
+            window.scenes.push(this);
         } else {
-            window.scenes = [this.scene];
+            window.scenes = [this];
         }
         // window.scene         = this.scene;
         // window.sceneCamera   = this.camera;

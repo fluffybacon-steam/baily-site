@@ -98,6 +98,8 @@ export default function Menu() {
   useEffect(() => {
     document.body.classList.toggle("dark-mode", isDark);
     if (tlRef.current) {
+      updateCalloutHoops();
+      
       if (isDark) {
         tlRef.current.play();
       } else {
@@ -282,5 +284,20 @@ export default function Menu() {
   )
 }
 
+
+function updateCalloutHoops(){
+  const callout_scene = window.scenes.find(s => s.name === 'callouts');
+  console.log("scenes", window.scenes, "callout_scene", callout_scene);
+  if(!callout_scene) return
+  ['ring_0', 'ring_1', 'ring_2'].forEach((name, i) => {
+    const hoop = callout_scene.getHoop(name);
+    console.log("hooop",hoop);
+      if (!hoop) return;
+      const varName = `--callout-${i + 1}-color`;
+      const color = getComputedStyle(document.body).getPropertyValue(varName).trim();
+      console.log("setting ",name, " to color ", color);
+      hoop.material.color.set(color);
+  });
+}
 
 const D2R = (d) => (d * Math.PI) / 180;

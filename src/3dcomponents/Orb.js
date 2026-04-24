@@ -1,31 +1,28 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 const TAU = Math.PI * 2;
 
 /**
  * A glowing orb that orbits a point in space, shedding a fading comet trail.
  *
- * The orb emits actual light via a PointLight, so it will illuminate nearby
- * objects (like your Cubes). The trail is a series of small spheres that
- * fade out over time.
+ * The trail uses lightweight Sprites with a radial-gradient glow texture
+ * and additive blending — inspired by the three.js particle-spiral /
+ * afterimage demo — instead of heavy SphereGeometry meshes.
  *
  * @example — basic orbit
  * const orb = scene.addOrb('sun', {
  *     center: { x: 0, y: 0, z: 0 },
  *     radius: 15,
- *     frequency: 0.1,        // orbits per second
+ *     frequency: 0.1,
  *     color: 0xffaa00,
  * });
  *
- * @example — tilted elliptical orbit
+ * @example — tilted elliptical orbit with comet trail
  * const orb = scene.addOrb('comet', {
  *     center: { x: 0, y: 5, z: 0 },
  *     radius: 20,
- *     radiusY: 10,           // ellipse
+ *     radiusY: 10,
  *     frequency: 0.05,
  *     tilt: { x: 15, z: 30 },
  *     color: 0x00ffff,
@@ -46,7 +43,7 @@ export class Orb {
      * @param {number}        opts.size           orb diameter (default 1)
      * @param {number}        opts.intensity      light intensity (default 2)
      * @param {number}        opts.lightDistance  point light range (default 50)
-     * @param {number}        opts.trailLength    number of trail particles (default 25)
+     * @param {number}        opts.trailLength    number of trail sprites (default 25)
      * @param {number}        opts.trailDuration  seconds before trail fully fades (default 1.5)
      * @param {boolean}       opts.emitLight      attach a PointLight (default true)
      * @param {THREE.Camera}  opts.camera
@@ -63,7 +60,7 @@ export class Orb {
         color         = 0xffaa00,
         size          = 1,
         intensity     = 2,
-        lightDistance = 50,
+        lightDistance  = 50,
         trailLength   = 0,
         trailDuration = 0,
         emitLight     = true,
@@ -93,6 +90,9 @@ export class Orb {
         this._trailLength   = trailLength;
         this._trailDuration = trailDuration;
 
+        // ── Shared glow texture (one for orb halo + trail sprites) ───────────
+        this._glowTexture = this._createGlowTexture(128, this._color);
+
         // ── Scene graph ──────────────────────────────────────────────────────
         this.root = new THREE.Group();
 
@@ -105,19 +105,18 @@ export class Orb {
         // ── Orb core ─────────────────────────────────────────────────────────
         const coreGeo = new THREE.SphereGeometry(size / 2, 32, 32);
         this._coreMaterial = new THREE.MeshStandardMaterial({
-            color:            this._color,
-            emissive:         this._color,
+            color:             this._color,
+            emissive:          this._color,
             emissiveIntensity: intensity,
-            metalness:        0.0,
-            roughness:        0.3,
+            metalness:         0.0,
+            roughness:         0.3,
         });
         this._core = new THREE.Mesh(coreGeo, this._coreMaterial);
         this._pivot.add(this._core);
 
         // ── Glow halo (additive sprite) ──────────────────────────────────────
-        const glowTexture = this._createGlowTexture(128, this._color);
         this._glowMaterial = new THREE.SpriteMaterial({
-            map:         glowTexture,
+            map:         this._glowTexture,
             color:       this._color,
             transparent: true,
             blending:    THREE.AdditiveBlending,
@@ -135,31 +134,40 @@ export class Orb {
             this._core.add(this._light);
         }
 
-        // ── Trail particles ──────────────────────────────────────────────────
+        // ── Trail sprites ────────────────────────────────────────────────────
+        // Inspired by the three.js particle-spiral example:
+        //   • Sprites instead of SphereGeometry  → orders of magnitude lighter
+        //   • Shared glow texture with additive blending → soft, luminous look
+        //   • Non-linear alpha fade (quadratic ease-out) mirrors the example's
+        //     `modTime.oneMinus().mul(2.0)` alpha curve
         this._trail = [];
         this._trailIndex = 0;
-        this._trailMaterial = new THREE.MeshBasicMaterial({
-            color:       this._color,
-            transparent: true,
-            opacity:     0.6,
-            blending:    THREE.AdditiveBlending,
-            depthWrite:  false,
-        });
 
-        // const trailGeo = new THREE.SphereGeometry(size * 0.3, 8, 8);
-        const trailGeo = new THREE.SphereGeometry(size, 10, 10);
         for (let i = 0; i < trailLength; i++) {
-            const particle = new THREE.Mesh(trailGeo, this._trailMaterial.clone());
-            particle.visible = false;
-            particle.userData.birthTime = 0;
-            this.root.add(particle);  // Trail in world space, not pivot
-            this._trail.push(particle);
+            // Each sprite gets its own material so we can set per-particle
+            // opacity independently (SpriteMaterial has no per-instance attrs).
+            const mat = new THREE.SpriteMaterial({
+                map:         this._glowTexture,
+                color:       this._color,
+                transparent: true,
+                opacity:     0,
+                blending:    THREE.AdditiveBlending,
+                depthWrite:  false,
+                depthTest:   true,
+            });
+
+            const sprite = new THREE.Sprite(mat);
+            sprite.visible   = false;
+            sprite.userData.birthTime = 0;
+            // Trail lives in world space so it doesn't rotate with the pivot
+            this.root.add(sprite);
+            this._trail.push(sprite);
         }
 
         // ── Animation state ──────────────────────────────────────────────────
-        this._angle      = this._phase;
-        this._running    = false;
-        this._ticker     = null;
+        this._angle         = this._phase;
+        this._running       = false;
+        this._ticker        = null;
         this._lastTrailTime = 0;
 
         // Position orb at starting angle
@@ -173,9 +181,6 @@ export class Orb {
     // ORBIT CONTROLS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Start or resume orbital motion.
-     */
     start() {
         if (this._running) return;
         this._running = true;
@@ -194,10 +199,12 @@ export class Orb {
             this._updateOrbPosition();
 
             // Spawn trail particle (throttled)
-            const trailInterval = this._trailDuration / this._trailLength;
-            if (time - this._lastTrailTime > trailInterval) {
-                this._spawnTrailParticle(time);
-                this._lastTrailTime = time;
+            if (this._trailLength > 0 && this._trailDuration > 0) {
+                const trailInterval = this._trailDuration / this._trailLength;
+                if (time - this._lastTrailTime > trailInterval) {
+                    this._spawnTrailParticle(time);
+                    this._lastTrailTime = time;
+                }
             }
 
             // Fade trail particles
@@ -206,9 +213,6 @@ export class Orb {
         gsap.ticker.add(this._ticker);
     }
 
-    /**
-     * Pause orbital motion (trail continues fading).
-     */
     pause() {
         if (!this._running) return;
         this._running = false;
@@ -218,9 +222,6 @@ export class Orb {
         }
     }
 
-    /**
-     * Stop and reset to initial phase.
-     */
     stop() {
         this.pause();
         this._angle = this._phase;
@@ -232,43 +233,20 @@ export class Orb {
     // PARAMETER SETTERS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /**
-     * Change orbit center (animatable).
-     * The center is the pivot point — tilt rotates the orbital plane AROUND this point.
-     */
     setCenter(x, y, z, vars = {}) {
-        // Always update internal tracking
         this._center = { x, y, z };
-
         if (vars.duration || vars.ease) {
             return gsap.to(this._pivot.position, { x, y, z, ...vars });
         }
         this._pivot.position.set(x, y, z);
     }
 
-    /**
-     * Get the world position of the orbit center (pivot point).
-     * Useful for verifying the center stays fixed when tilting.
-     * @returns {THREE.Vector3}
-     */
     getCenterWorldPosition() {
         const pos = new THREE.Vector3();
         this._pivot.getWorldPosition(pos);
         return pos;
     }
 
-    /**
-     * Set the orbit's Z depth so it appears as a percentage of viewport width.
-     * Keeps current X and Y center coordinates.
-     *
-     * @param {number} percent   0–1, e.g., 0.6 = orbit fills 60% of viewport width
-     * @param {object} [vars]    optional GSAP vars for animation
-     * @returns {number}         the calculated Z value
-     *
-     * @example
-     * const orb = scene.addOrb('comet', { radius: 35, ... });
-     * orb.setZForViewportPercent(0.6);  // orbit is 60% of viewport width
-     */
     setZForViewportPercent(percent, vars = {}) {
         const cam = this.camera;
         if (!cam) {
@@ -276,45 +254,28 @@ export class Orb {
             return this._center.z;
         }
 
-        const canvasWidth = this._mountEl?.clientWidth ?? window.innerWidth;
-        const fovRad = THREE.MathUtils.degToRad(cam.fov);
-        const aspect = cam.aspect;
-
-        // Orbit diameter in world units
+        const canvasWidth  = this._mountEl?.clientWidth ?? window.innerWidth;
+        const fovRad       = THREE.MathUtils.degToRad(cam.fov);
+        const aspect       = cam.aspect;
         const orbitDiameter = this._radius * 2;
-
-        // Target pixel width
         const targetPixelWidth = canvasWidth * percent;
-
-        // Solve: orbitDiameter / visibleWidth = targetPixelWidth / canvasWidth
-        // visibleWidth = 2 * distance * tan(fov/2) * aspect
-        const ratio = targetPixelWidth / canvasWidth;
+        const ratio    = targetPixelWidth / canvasWidth;
         const distance = orbitDiameter / (ratio * 2 * Math.tan(fovRad / 2) * aspect);
         const z = cam.position.z - distance;
 
-        // Apply
         this.setCenter(this._center.x, this._center.y, z, vars);
         return z;
     }
 
-    /**
-     * Change orbit radius.
-     */
     setRadius(radius, radiusY = null) {
         this._radius  = radius;
         this._radiusY = radiusY ?? radius;
     }
 
-    /**
-     * Change orbit frequency (orbits per second).
-     */
     setFrequency(freq) {
         this._frequency = freq;
     }
 
-    /**
-     * Change orbit tilt (degrees).
-     */
     setTilt(x, y, z) {
         this._tilt = {
             x: THREE.MathUtils.degToRad(x ?? 0),
@@ -324,9 +285,6 @@ export class Orb {
         this._pivot.rotation.set(this._tilt.x, this._tilt.y, this._tilt.z);
     }
 
-    /**
-     * Change glow color.
-     */
     setColor(color) {
         this._color.set(color);
         this._coreMaterial.color.set(color);
@@ -334,15 +292,18 @@ export class Orb {
         this._glowMaterial.color.set(color);
         if (this._light) this._light.color.set(color);
 
-        // Update existing trail particles
-        for (const p of this._trail) {
-            p.material.color.set(color);
+        // Regenerate glow texture with new color
+        this._glowTexture.dispose();
+        this._glowTexture = this._createGlowTexture(128, this._color);
+        this._glowMaterial.map = this._glowTexture;
+
+        // Update trail sprite materials
+        for (const sprite of this._trail) {
+            sprite.material.color.set(color);
+            sprite.material.map = this._glowTexture;
         }
     }
 
-    /**
-     * Change light intensity.
-     */
     setIntensity(intensity) {
         this._intensity = intensity;
         this._coreMaterial.emissiveIntensity = intensity;
@@ -350,7 +311,7 @@ export class Orb {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // INTERNAL
+    // INTERNAL — TRAIL (sprite-based, inspired by three.js particle spiral)
     // ═══════════════════════════════════════════════════════════════════════════
 
     _updateOrbPosition() {
@@ -360,61 +321,106 @@ export class Orb {
     }
 
     _spawnTrailParticle(time) {
-        const particle = this._trail[this._trailIndex];
+        if (this._trailLength === 0) return;
+
+        const sprite = this._trail[this._trailIndex];
         this._trailIndex = (this._trailIndex + 1) % this._trailLength;
 
-        // Get world position of orb core
+        // Grab the orb's current world position
         const worldPos = new THREE.Vector3();
         this._core.getWorldPosition(worldPos);
 
-        particle.position.copy(worldPos);
-        particle.visible = true;
-        particle.userData.birthTime = time;
-        particle.material.opacity = 1;
-        particle.scale.setScalar(1);
+        sprite.position.copy(worldPos);
+        sprite.visible = true;
+        sprite.userData.birthTime = time;
+        sprite.material.opacity = 1;
+        // Initial scale matches the orb's glow halo
+        sprite.scale.set(this._size * 3, this._size * 3, 1);
     }
 
+    /**
+     * Fade & shrink trail sprites every frame.
+     *
+     * The alpha curve is modelled after the three.js particle-spiral example's
+     * `fAlpha = modTime.oneMinus().mul(2.0)`:
+     *   – A "one minus life ratio" base gives linear fade-out.
+     *   – Squaring it (quadratic ease-out) keeps particles bright near the
+     *     orb and makes them vanish quickly at the tail — the classic comet
+     *     look. The ×2 clamp saturates alpha to 1.0 for the first half of
+     *     the particle's life, so the trail stays vivid close to the head.
+     *
+     * Scale follows an inverse-square curve so particles shrink smoothly
+     * from full size to a tiny point — again matching the feel of the
+     * spiral demo's `accTime = modTime * modTime` acceleration.
+     */
     _updateTrail(time) {
-        for (const particle of this._trail) {
-            if (!particle.visible) continue;
+        for (const sprite of this._trail) {
+            if (!sprite.visible) continue;
 
-            const age = time - particle.userData.birthTime;
-            const lifeRatio = age / this._trailDuration;
+            const age       = time - sprite.userData.birthTime;
+            const lifeRatio = Math.min(age / this._trailDuration, 1);
 
             if (lifeRatio >= 1) {
-                // particle.visible = false;
+                sprite.visible = false;
                 continue;
             }
 
-            // Fade out and shrink
-            // particle.material.opacity = 0.6 * (1 - lifeRatio);
-            particle.scale.setScalar(1 - lifeRatio * 0.9);
+            // ── Alpha: saturated-then-fade curve ─────────────────────────
+            // raw = (1 - lifeRatio) * 2   →  clamped to [0, 1]
+            // Stays at 1.0 for the first 50% of life, then fades out.
+            const rawAlpha = (1 - lifeRatio) * 2;
+            const alpha    = Math.min(rawAlpha, 1);
+            sprite.material.opacity = alpha;
+
+            // ── Scale: quadratic shrink ──────────────────────────────────
+            // Mirrors the spiral demo's `accTime = modTime²` acceleration:
+            // particles shrink slowly at first, then collapse quickly.
+            const scaleFactor = (1 - lifeRatio * lifeRatio);
+            const s = this._size * 3 * scaleFactor;
+            sprite.scale.set(s, s, 1);
         }
     }
 
     _clearTrail() {
-        for (const particle of this._trail) {
-            particle.visible = false;
+        for (const sprite of this._trail) {
+            sprite.visible = false;
+            sprite.material.opacity = 0;
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GLOW TEXTURE (shared by orb halo + trail sprites)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Generates a radial-gradient canvas texture that acts like the
+     * circle.png sprite in the three.js example — a soft, bright center
+     * fading to fully transparent edges. Using a canvas texture means
+     * no external image dependency.
+     */
     _createGlowTexture(resolution, color) {
-        const canvas = document.createElement('canvas');
+        const canvas  = document.createElement('canvas');
         canvas.width  = resolution;
         canvas.height = resolution;
-        const ctx = canvas.getContext('2d');
+        const ctx     = canvas.getContext('2d');
 
-        const center = resolution / 2;
-        const gradient = ctx.createRadialGradient(center, center, 0, center, center, center);
+        const center   = resolution / 2;
+        const gradient = ctx.createRadialGradient(
+            center, center, 0,
+            center, center, center,
+        );
 
-        // Convert THREE.Color to CSS
         const c = new THREE.Color(color);
-        const cssColor = `rgb(${Math.floor(c.r * 255)}, ${Math.floor(c.g * 255)}, ${Math.floor(c.b * 255)})`;
+        const r = Math.floor(c.r * 255);
+        const g = Math.floor(c.g * 255);
+        const b = Math.floor(c.b * 255);
 
-        gradient.addColorStop(0,   cssColor);
-        gradient.addColorStop(0.2, cssColor);
-        gradient.addColorStop(0.9, `rgba(${Math.floor(c.r * 255)}, ${Math.floor(c.g * 255)}, ${Math.floor(c.b * 255)}, 0.5)`);
-        gradient.addColorStop(1,   'rgba(0, 0, 0, 0)');
+        // Tight bright core → soft fall-off → transparent edge
+        gradient.addColorStop(0,    `rgba(${r}, ${g}, ${b}, 1)`);
+        gradient.addColorStop(0.15, `rgba(${r}, ${g}, ${b}, 0.9)`);
+        gradient.addColorStop(0.4,  `rgba(${r}, ${g}, ${b}, 0.4)`);
+        gradient.addColorStop(0.7,  `rgba(${r}, ${g}, ${b}, 0.12)`);
+        gradient.addColorStop(1,    `rgba(${r}, ${g}, ${b}, 0)`);
 
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, resolution, resolution);
@@ -436,25 +442,34 @@ export class Orb {
     // GETTERS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    /** Current world position of the orb (the glowing sphere). */
     getWorldPosition() {
         const pos = new THREE.Vector3();
         this._core.getWorldPosition(pos);
         return pos;
     }
 
-    /** Current orbit angle in radians. */
-    get angle() { return this._angle; }
-
-    /** The PointLight instance (if emitLight was true). */
-    get light() { return this._light; }
-
-    /** Current center position (pivot point). */
+    get angle()  { return this._angle; }
+    get light()  { return this._light; }
     get center() { return { ...this._center }; }
 
-    /**
-     * Debug: log center positions to verify tilt preserves the pivot location.
-     */
+    get trailLength() {
+        return this._trailLength;
+    }
+
+    set trailLength(val) {
+        this._trailLength = Math.floor(val);
+    }
+
+    get intensity() {
+        return this._intensity;
+    }
+
+    set intensity(val) {
+        this._intensity = val;
+        this._coreMaterial.emissiveIntensity = val;
+        if (this._light) this._light.intensity = val;
+    }
+
     debugCenter() {
         const worldPos = this.getCenterWorldPosition();
         console.group('Orb center debug');
@@ -473,25 +488,7 @@ export class Orb {
         console.groupEnd();
         return worldPos;
     }
-    /** Animatable intensity property */
-    get trailLength() {
-        return this._trailLength;
-    }
 
-    set trailLength(val) {
-        // Note: Only affects newly spawned particles
-        this._trailLength = Math.floor(val);
-    }
-
-    get intensity() {
-        return this._intensity;
-    }
-
-    set intensity(val) {
-        this._intensity = val;
-        this._coreMaterial.emissiveIntensity = val;
-        if (this._light) this._light.intensity = val;
-    }
     // ═══════════════════════════════════════════════════════════════════════════
     // LIFECYCLE
     // ═══════════════════════════════════════════════════════════════════════════
@@ -504,16 +501,17 @@ export class Orb {
         this._coreMaterial.dispose();
 
         // Glow
-        this._glowMaterial.map?.dispose();
         this._glowMaterial.dispose();
+
+        // Shared texture
+        this._glowTexture.dispose();
 
         // Light
         if (this._light) this._light.dispose?.();
 
-        // Trail
-        for (const particle of this._trail) {
-            particle.geometry.dispose();
-            particle.material.dispose();
+        // Trail sprites
+        for (const sprite of this._trail) {
+            sprite.material.dispose();
         }
     }
 }

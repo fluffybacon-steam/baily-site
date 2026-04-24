@@ -849,14 +849,17 @@ export function calloutAnimation(scene, containerRef) {
 
     // ── Shared helpers ─────────────────────────────────────────────────────────
 
-    const getCalloutEls = (wrapper) => ({
-        circle_outline: wrapper.querySelector('.circle-outline'),
-        circle_color:   wrapper.querySelector('.circle-color'),
-        copy:           wrapper.querySelector('.copy-wrapper'),
-        heading:        wrapper.querySelector('.circle-color h2'),
-        color:          wrapper.dataset.color,
-        hoop_color:     wrapper.dataset.colorHoop ?? '#00aeef'
-    });
+    const getCalloutEls = (wrapper) => {
+        const index = wrapper.className.match(/callout_wrapper--(\d+)/)?.[1];
+        return {
+            circle_outline: wrapper.querySelector('.circle-outline'),
+            circle_color:   wrapper.querySelector('.circle-color'),
+            copy:           wrapper.querySelector('.copy-wrapper'),
+            heading:        wrapper.querySelector('.circle-color h2'),
+            color:          wrapper.dataset.color,
+            hoop_color:     getComputedStyle(document.body).getPropertyValue(`--callout-${index}-color`).trim(),
+        };
+    };
 
     const getCalloutPositions = (circle_outline, circle_color, targetZ, circle_rect) => ({
         startPos:        scene.getElementWorldPosition(circle_outline, { anchor: 'left',   z: targetZ }),
@@ -883,7 +886,8 @@ export function calloutAnimation(scene, containerRef) {
 
         gsap.set(circle_color, {
             x:        -circle_rect.width,
-            '--bg':   'transparent',
+            // '--bg':   'transparent',
+            opacity: 0,
             clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
         });
         gsap.set(heading, { x: -heading.offsetWidth });
@@ -894,6 +898,7 @@ export function calloutAnimation(scene, containerRef) {
 
         hoop.enablePortal();
         hoop.clipChevron(chevron);
+        // hoop.root.visible = false;
 
         chevron.setPosition(startPos.x, startPos.y, startPos.z);
         chevron.setRotation(0, 0, -90);
@@ -932,14 +937,16 @@ export function calloutAnimation(scene, containerRef) {
                 onReverseComplete: () => hoop.clipChevron(chevron),
             }, 0.95)
             .to(chevron.root.position, { x: textTargetRight.x, duration: 2, ease: 'none' }, 1)
-            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 1)
+            // .to(circle_color, { '--bg': hoop_color, duration: 0.5, ease: 'power1.inOut' }, 1)
+            .to(circle_color,{ opacity: 1, duration: 0.5, ease: 'power1.inOut' }, 1)
             .to(circle_color, {
                 clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
                 x: -circle_rect.width / 2,
                 duration: 1,
                 ease: 'none'
             }, 1)
-            .to(heading, { x: 0 + circle_rect.width / 3 }, 2);
+            .to(heading, { x: 0 + circle_rect.width / 3 }, 2)
+            .fromTo(circle_outline.querySelector("svg"), { x:'100%'},{ x:'0%', duration: 0.5}, 2)
 
         blindEls.forEach(({ el }, i) => {
             callout_tl.fromTo(el,
@@ -973,7 +980,8 @@ export function calloutAnimation(scene, containerRef) {
 
         gsap.set(circle_color, {
             x:        circle_rect.width,
-            '--bg':   'transparent',
+            // '--bg':   'transparent',
+            opacity: 0,
             clipPath: `inset(0px 0px 0% ${circle_rect.width}px round ${circle_rect.height}px)`,
         });
         gsap.set(heading, { x: heading.offsetWidth });
@@ -1013,14 +1021,16 @@ export function calloutAnimation(scene, containerRef) {
             .add(chevron.setAngle(45, { duration: 0.4 }), 4.3)
             .to(chevron.root.position, { x: textTargetLeft.x, duration: 1.85, ease: 'none' }, 4.15)
             .to(chevron.root.rotation, { x: D2R(180), duration: 1, ease: 'power2.inOut' }, 4.85)
-            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 4.15)
+            // .to(circle_color, { '--bg': hoop_color, duration: 0.5, ease: 'power1.inOut' }, 4.15)
+            .to(circle_color, { opacity: 1, duration: 0.5, ease: 'power1.inOut' }, 4.15)
             .to(circle_color, {
                 clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
                 x: circle_rect.width / 2,
                 duration: 1,
                 ease: 'none'
             }, 4.15)
-            .to(heading, { x: 0 - circle_rect.width / 3 }, 5);
+            .to(heading, { x: 0 - circle_rect.width / 3 }, 5)
+            .fromTo(circle_outline.querySelector("svg"), { x:'-100%'},{ x:'0%', duration: 0.5}, 5)
 
         colEls.slice().reverse().forEach(({ el, fromAbove }, i) => {
             callout_tl.fromTo(el,
@@ -1054,7 +1064,8 @@ export function calloutAnimation(scene, containerRef) {
 
         gsap.set(circle_color, {
             x:        -circle_rect.width,
-            '--bg':   'transparent',
+            // '--bg':   'transparent',
+            opacity: 0,
             clipPath: `inset(0px ${-circle_rect.width}px 0% 0% round ${circle_rect.height}px)`,
         });
         gsap.set(heading, { x: -heading.offsetWidth });
@@ -1095,7 +1106,8 @@ export function calloutAnimation(scene, containerRef) {
                 onStart:           () => hoop.clipChevron(chevron),
                 onReverseComplete: () => hoop.releaseChevron(chevron),
             }, 6.35)
-            .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 6)
+            // .to(circle_color, { '--bg': color, duration: 0.5, ease: 'power1.inOut' }, 6)
+            .to(circle_color, { opacity: 1, duration: 0.5, ease: 'power1.inOut' }, 6)
             .to(circle_color, {
                 clipPath: `inset(0px 0px 0% 0px round ${circle_rect.height}px)`,
                 x: -circle_rect.width / 2,
@@ -1103,6 +1115,7 @@ export function calloutAnimation(scene, containerRef) {
                 ease: 'none'
             }, 6)
             .to(heading, { x: 0 + circle_rect.width / 3 }, 7)
+            .fromTo(circle_outline.querySelector("svg"), { x:'100%'},{ x:'0%', duration: 0.5}, 7)
             .fromTo(copy,
                 { y: -50, opacity: 0 },
                 { y: 0,   opacity: 1 },
@@ -1328,6 +1341,30 @@ export function calloutAnimation(scene, containerRef) {
     callouts.forEach((wrapper, index) => {
         handlers[index]?.(wrapper);
     });
+
+    return () => {
+        callout_tl.scrollTrigger?.kill();
+        callout_tl.kill();
+
+        // Remove dynamically injected blind/column/circle elements
+        callouts.forEach((wrapper) => {
+            wrapper.querySelectorAll('.circle-color > div').forEach((el) => el.remove());
+            // Reset inline styles gsap applied
+            const circleColor = wrapper.querySelector('.circle-color');
+            const heading = wrapper.querySelector('.circle-color h2');
+            const copy = wrapper.querySelector('.copy-wrapper');
+            [circleColor, heading, copy].forEach((el) => {
+                if (el) gsap.set(el, { clearProps: 'all' });
+            });
+        });
+
+        // Remove hoops from scene
+        ['ring_0', 'ring_1', 'ring_2'].forEach((name) => {
+            scene.removeHoop?.(name);
+        });
+
+        if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    };
 }
 
 

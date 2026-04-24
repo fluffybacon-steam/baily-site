@@ -26,7 +26,7 @@ export default function AnimatedNav() {
                     end: `bottom 50%`,
                     scrub: 2,
                     // pinSpacing: true,
-                    markers:1,
+                    markers:0,
                     // snap: {
                     //     snapTo: [0, 0.7, 1], // adjust 0.8 to whatever normalized position the "gap" label lands at
                     //     duration: 0.5,

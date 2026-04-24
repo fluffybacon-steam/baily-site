@@ -8,6 +8,7 @@ import AnimatedNav from '@/components/AnimatedNav'
 
 import HeroText from '@/components/HeroText';
 import SplitText from "@/components/SplitText";
+import ProfilePic from "@/components/ProfilePic";
 import Scene from "@/components/Scene";
 import { fireColumnAnimation } from '@/components/Scene';
 
@@ -40,6 +41,7 @@ export default function Home() {
           }} 
           />
         <HeroText text={'Hohman Digital'}/>
+        <ProfilePic />
         <Callouts />
         <AnimatedNav />
     </article>

@@ -942,6 +942,7 @@ export default function Showcase3D() {
         <div className="showcase showcase-3d" >
 
             <div className="devices" data-fade-stagger="0">
+                <GetAgencyDisclaimer agency={activeProject.agency} />
 
                 <Scene
                     onReady={handleSceneReady}
@@ -995,7 +996,7 @@ export default function Showcase3D() {
                     <image data-tooltip="TypeScript"                className="on-rail typescript"    width={7.5}  height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/4/4c/Typescript_logo_2020.svg" />
                     <image data-tooltip="Python"                    className="on-rail python"        width={8}    height={8}    href={python} />
                     {/* <image data-tooltip="HTML5"                     className="on-rail html5"         width={8}    height={8}    href={html5} /> */}
-                    <image data-tooltip="Shopify"                   className="on-rail shopify"       width={9}    height={8}    href={shopify} />
+                    <image data-tooltip="Shopify"                   className="on-rail shopify"       width={15}    height={8}    href={shopify} />
                     <image data-tooltip="Syndigo API"               className="on-rail syndigo"       width={8}    height={8}    href={syndigo} />
                     <image data-tooltip="CSS3"                      className="on-rail css"           width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/a/ab/Official_CSS_Logo.svg" />
                     <image data-tooltip="WooCommerce"               className="on-rail woo"           width={8}    height={7.5}  href="https://upload.wikimedia.org/wikipedia/commons/5/51/WooCommerce_logo_%282015%29.svg" />
@@ -1017,7 +1018,6 @@ export default function Showcase3D() {
                 <div className="copy" key={activeProject.id} data-fade-stagger="0.5">
                     <h2>{activeProject.id}</h2>
                     <div className="brief" dangerouslySetInnerHTML={{ __html: activeProject.copy }} />
-                    <GetAgencyDisclaimer agency={activeProject.agency} />
                     {activeProject.url && (
                         <a className="button-pill button-pill--medium button-pill--color" href={activeProject.url}>Visit Link</a>
                     )}
@@ -1052,11 +1052,11 @@ const GetAgencyDisclaimer = ({ agency }) => {
         case 'donovan':
             return (
                 <div className="agency" style={{'--bg-color': '#d54f1f'}}>
-                    <span>Made in partnership with</span>
+                    <span>Project by agency</span>
                     <a href="https://donovanadv.com"><DonovanIcon /></a>
                 </div>
             );
         default:
-            return <div className="agency" />;
+            return (<div className="agency"></div>)
     }
 };
